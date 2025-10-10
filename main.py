@@ -34,7 +34,7 @@ async def main():
     message_handler = MessageHandler(llm_client, conversation)
     
     # Инициализируем бота
-    bot = TelegramBot(config.telegram_bot_token, message_handler)
+    bot = TelegramBot(config.telegram_bot_token, message_handler, conversation)
     
     await bot.start()
 
