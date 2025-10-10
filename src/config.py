@@ -21,4 +21,7 @@ class Config:
         self.llm_temperature = float(os.getenv("LLM_TEMPERATURE", "0.7"))
         self.llm_max_tokens = int(os.getenv("LLM_MAX_TOKENS", "1000"))
         self.llm_timeout = int(os.getenv("LLM_TIMEOUT", "30"))
+        
+        # Параметры истории диалогов
+        self.max_history_messages = int(os.getenv("MAX_HISTORY_MESSAGES", "10"))
 
