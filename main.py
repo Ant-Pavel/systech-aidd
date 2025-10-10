@@ -1,6 +1,8 @@
 import asyncio
 import logging
 from src.config import Config
+from src.llm_client import LLMClient
+from src.message_handler import MessageHandler
 from src.bot import TelegramBot
 
 
@@ -14,7 +16,22 @@ logging.basicConfig(
 
 async def main():
     config = Config()
-    bot = TelegramBot(config.telegram_bot_token)
+    
+    # Инициализируем LLM клиент
+    llm_client = LLMClient(
+        api_key=config.openrouter_api_key,
+        model=config.llm_model,
+        temperature=config.llm_temperature,
+        max_tokens=config.llm_max_tokens,
+        timeout=config.llm_timeout
+    )
+    
+    # Инициализируем обработчик сообщений
+    message_handler = MessageHandler(llm_client)
+    
+    # Инициализируем бота
+    bot = TelegramBot(config.telegram_bot_token, message_handler)
+    
     await bot.start()
 
 
