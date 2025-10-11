@@ -157,21 +157,52 @@ class MessageHandler:
 
 ## 🔧 Конфигурация
 
-### Pydantic Settings
+### Pydantic Settings v2
 
 - **BaseSettings** для Config класса
-- **Валидация полей** через Field с constraints
-- **Автозагрузка** из .env файла
+- **Валидация полей** через Field с constraints (min_length, ge, le)
+- **Pydantic типы**: PositiveInt, PositiveFloat вместо int/float
+- **Автозагрузка** из .env файла через model_config
 - **Значения по умолчанию** для опциональных параметров
+- **Понятные ошибки**: ValidationError при невалидных данных
 
 ```python
-from pydantic_settings import BaseSettings
-from pydantic import Field
+from pydantic import Field, PositiveFloat, PositiveInt
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Config(BaseSettings):
-    telegram_bot_token: str = Field(..., description="Telegram Bot API token")
-    llm_temperature: float = Field(default=0.7, ge=0.0, le=2.0)
+    """Конфигурация приложения."""
+    
+    # Обязательные параметры
+    telegram_bot_token: str = Field(
+        ..., min_length=1, description="Telegram Bot API token"
+    )
+    
+    # Опциональные с валидацией
+    llm_temperature: PositiveFloat = Field(
+        default=0.7, ge=0.0, le=2.0, description="LLM temperature"
+    )
+    llm_max_tokens: PositiveInt = Field(
+        default=1000, ge=1, le=100000, description="Max tokens"
+    )
+    
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
 ```
+
+### Преимущества Pydantic Config
+
+- ✅ Автоматическое приведение типов (str → int/float)
+- ✅ Валидация на уровне типов (PositiveInt > 0)
+- ✅ Валидация constraints (ge, le, min_length)
+- ✅ Понятные сообщения об ошибках
+- ✅ Type-safe с mypy через плагин pydantic.mypy
+- ✅ Не нужно вручную вызывать load_dotenv()
+- ✅ Case-insensitive загрузка переменных
 
 ## 📊 Логирование
 
