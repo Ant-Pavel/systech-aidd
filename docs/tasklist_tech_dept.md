@@ -4,7 +4,7 @@
 
 | Итерация | Описание                        | Статус       | Дата завершения |
 |----------|---------------------------------|--------------|-----------------|
-| 1️⃣       | Инструменты качества кода       | ⏳ Не начато | -               |
+| 1️⃣       | Инструменты качества кода       | ✅ Завершено | 2025-10-11      |
 | 2️⃣       | Type safety (type hints)        | ⏳ Не начато | -               |
 | 3️⃣       | Unit-тестирование               | ⏳ Не начато | -               |
 | 4️⃣       | SOLID: Protocols и абстракции   | ⏳ Не начато | -               |
@@ -25,16 +25,16 @@
 **Тестирование:** Запустить `make lint`, `make format`, `make typecheck`, `make test`
 
 ### Задачи:
-- [ ] Обновить `pyproject.toml` с dev-зависимостями (ruff, mypy, pytest, pytest-asyncio, pytest-cov)
-- [ ] Настроить ruff в `[tool.ruff]` (line-length=100, select правила)
-- [ ] Настроить mypy в `[tool.mypy]` (strict=true, python_version="3.11")
-- [ ] Настроить pytest в `[tool.pytest.ini_options]` (testpaths, markers)
-- [ ] Обновить `Makefile` с командами: lint, format, typecheck, test, test-cov, quality (все вместе)
-- [ ] Запустить `make format` на всей кодовой базе
-- [ ] Запустить `make lint` и убедиться в отсутствии критичных ошибок
-- [ ] Создать структуру директорий `tests/unit/` и `tests/integration/`
-- [ ] Создать `tests/conftest.py` для fixtures
-- [ ] Обновить файлы правил `*.mdc` и `vision.md` на соответствие сделанным изменениям
+- [x] Обновить `pyproject.toml` с dev-зависимостями (ruff, mypy, pytest, pytest-asyncio, pytest-cov)
+- [x] Настроить ruff в `[tool.ruff]` (line-length=100, select правила)
+- [x] Настроить mypy в `[tool.mypy]` (strict=true, python_version="3.11")
+- [x] Настроить pytest в `[tool.pytest.ini_options]` (testpaths, markers)
+- [x] Обновить `Makefile` с командами: lint, format, typecheck, test, test-cov, quality (все вместе)
+- [x] Запустить `make format` на всей кодовой базе
+- [x] Запустить `make lint` и убедиться в отсутствии критичных ошибок
+- [x] Создать структуру директорий `tests/unit/` и `tests/integration/`
+- [x] Создать `tests/conftest.py` для fixtures
+- [x] Обновить файлы правил `*.mdc` и `vision.md` на соответствие сделанным изменениям
 
 **Проверка качества:** `make quality` проходит без ошибок (кроме mypy - ждем итерацию 2)
 
