@@ -1,0 +1,162 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "uv-sync",
+            "type": "shell",
+            "command": "uv",
+            "args": ["sync", "--all-extras"],
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "🤖 Запустить бота",
+            "type": "shell",
+            "command": "uv",
+            "args": ["run", "python", "main.py"],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "focus": true
+            },
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "🧪 Запустить все тесты",
+            "type": "shell",
+            "command": "uv",
+            "args": ["run", "pytest", "tests/", "-v"],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "focus": true
+            },
+            "problemMatcher": [],
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "🧪 Тесты с покрытием",
+            "type": "shell",
+            "command": "uv",
+            "args": [
+                "run",
+                "pytest",
+                "tests/",
+                "--cov=src",
+                "--cov-report=term-missing",
+                "--cov-report=html",
+                "-v"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "focus": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "🎨 Форматирование кода",
+            "type": "shell",
+            "command": "uv",
+            "args": ["run", "ruff", "format", "src/", "tests/", "main.py"],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "🔍 Линтер (проверка)",
+            "type": "shell",
+            "command": "uv",
+            "args": ["run", "ruff", "check", "src/", "tests/", "main.py"],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "🔧 Линтер (исправление)",
+            "type": "shell",
+            "command": "uv",
+            "args": ["run", "ruff", "check", "--fix", "src/", "tests/", "main.py"],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "🔬 Проверка типов",
+            "type": "shell",
+            "command": "uv",
+            "args": ["run", "mypy", "src/", "main.py"],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "✅ Полная проверка качества",
+            "type": "shell",
+            "command": "make",
+            "args": ["quality"],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "focus": true
+            },
+            "problemMatcher": [],
+            "dependsOrder": "sequence"
+        },
+        {
+            "label": "✅ Проверка качества (без тестов)",
+            "type": "shell",
+            "command": "make",
+            "args": ["quality-no-test"],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "focus": true
+            },
+            "problemMatcher": [],
+            "dependsOrder": "sequence"
+        },
+        {
+            "label": "📦 Установить зависимости",
+            "type": "shell",
+            "command": "uv",
+            "args": ["sync", "--all-extras"],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "🧹 Очистка",
+            "type": "shell",
+            "command": "make",
+            "args": ["clean"],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        }
+    ]
+}
+
+
