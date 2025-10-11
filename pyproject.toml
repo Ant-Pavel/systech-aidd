@@ -43,6 +43,7 @@ select = [
 ]
 ignore = [
     "RUF001",  # Allow cyrillic characters in strings (Russian text)
+    "RUF002",  # Allow cyrillic characters in docstrings (Russian documentation)
 ]
 
 [tool.mypy]

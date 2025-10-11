@@ -1,16 +1,17 @@
 import logging
 
-from src.conversation import Conversation
-from src.llm_client import LLMClient
+from src.protocols import ConversationStorageProtocol, LLMClientProtocol
 from src.types import ChatMessage
 
 logger = logging.getLogger(__name__)
 
 
 class MessageHandler:
-    def __init__(self, llm_client: LLMClient, conversation: Conversation) -> None:
-        self.llm_client: LLMClient = llm_client
-        self.conversation: Conversation = conversation
+    def __init__(
+        self, llm_client: LLMClientProtocol, conversation: ConversationStorageProtocol
+    ) -> None:
+        self.llm_client: LLMClientProtocol = llm_client
+        self.conversation: ConversationStorageProtocol = conversation
 
     async def handle_message(self, user_id: int, chat_id: int, text: str) -> str:
         logger.info(f"Received message from user {user_id} in chat {chat_id}: {text}")

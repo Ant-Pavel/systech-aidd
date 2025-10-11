@@ -2,6 +2,7 @@ import asyncio
 import logging
 
 from src.bot import TelegramBot
+from src.command_handler import CommandHandler
 from src.config import Config
 from src.conversation import Conversation
 from src.llm_client import LLMClient
@@ -30,11 +31,14 @@ async def main() -> None:
     # Инициализируем хранилище истории диалогов
     conversation = Conversation(config.max_history_messages)
 
+    # Инициализируем обработчик команд
+    command_handler = CommandHandler(conversation)
+
     # Инициализируем обработчик сообщений
     message_handler = MessageHandler(llm_client, conversation)
 
     # Инициализируем бота
-    bot = TelegramBot(config.telegram_bot_token, message_handler, conversation)
+    bot = TelegramBot(config.telegram_bot_token, command_handler, message_handler)
 
     await bot.start()
 

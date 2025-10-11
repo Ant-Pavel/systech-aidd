@@ -49,12 +49,14 @@
 ```
 systech-aidd/
 ├── src/
-│   ├── bot.py              # Главный класс бота (aiogram)
+│   ├── bot.py              # Координация bot/dispatcher и регистрация обработчиков
+│   ├── command_handler.py  # Обработчик команд бота (/start, /help, /clear)
+│   ├── message_handler.py  # Обработка текстовых сообщений пользователя
 │   ├── llm_client.py       # Класс для работы с LLM через Openrouter
-│   ├── message_handler.py  # Обработка сообщений пользователя
 │   ├── conversation.py     # Класс для хранения истории диалога
 │   ├── config.py           # Класс конфигурации (Pydantic BaseSettings)
-│   └── protocols.py        # Protocol интерфейсы для абстракций
+│   ├── protocols.py        # Protocol интерфейсы для абстракций (DIP)
+│   └── types.py            # TypedDict для структур данных (ChatMessage)
 ├── tests/
 │   ├── unit/               # Unit-тесты модулей
 │   ├── integration/        # Интеграционные тесты
@@ -70,12 +72,14 @@ systech-aidd/
 
 ### Основные модули
 
-- **bot.py** - инициализация aiogram бота, запуск polling
+- **bot.py** - координация bot/dispatcher, регистрация обработчиков команд и сообщений
+- **command_handler.py** - обработка команд бота (/start, /help, /clear)
+- **message_handler.py** - обработка текстовых сообщений от пользователя
 - **llm_client.py** - взаимодействие с Openrouter через openai клиент
-- **message_handler.py** - обработка входящих сообщений от пользователя
-- **conversation.py** - класс для управления историей диалога (в памяти, ключ: user_id + chat_id)
-- **config.py** - класс для загрузки и валидации конфигурации (Pydantic BaseSettings)
+- **conversation.py** - управление историей диалога (в памяти, ключ: user_id + chat_id)
+- **config.py** - загрузка и валидация конфигурации (Pydantic BaseSettings)
 - **protocols.py** - Protocol интерфейсы для Dependency Inversion Principle
+- **types.py** - TypedDict структуры данных (ChatMessage)
 
 ### Принцип организации
 - 1 класс = 1 файл
@@ -89,13 +93,13 @@ systech-aidd/
 ```
 User (Telegram) 
     ↓
-Bot (aiogram) 
-    ↓
-MessageHandler ← Conversation
-    ↓               (история)
-LLMClient
-    ↓
-Openrouter API
+TelegramBot (aiogram Bot + Dispatcher) 
+    ↓                              ↓
+CommandHandler              MessageHandler ← Conversation
+    ↓                              ↓               (история)
+(/start, /help, /clear)        LLMClient
+                                   ↓
+                             Openrouter API
 ```
 
 ### Поток обработки сообщения
@@ -112,14 +116,25 @@ Openrouter API
 ### Классы и их ответственность
 
 - **Config** - хранит настройки (токены, модель LLM, лимиты и т.д.)
-- **Bot** - точка входа, инициализация aiogram, регистрация хендлеров
-- **MessageHandler** - координирует обработку сообщения
+- **TelegramBot** - координация Bot/Dispatcher, регистрация обработчиков
+- **CommandHandler** - обработка команд бота (/start, /help, /clear)
+- **MessageHandler** - координирует обработку текстовых сообщений
 - **Conversation** - хранит и управляет историей диалогов (последние 10 сообщений)
 - **LLMClient** - отправляет запросы к LLM API
+
+### Protocol интерфейсы (DIP)
+
+- **ConversationStorageProtocol** - абстракция для работы с историей диалогов
+  - `add_message(user_id, chat_id, role, content)` - добавить сообщение
+  - `get_history(user_id, chat_id)` - получить историю
+  - `clear_history(user_id, chat_id)` - очистить историю
+- **LLMClientProtocol** - абстракция для работы с LLM
+  - `get_response(messages)` - получить ответ от LLM
 
 ### Команды бота
 
 - **/start** - приветствие и инструкция
+- **/help** - справка по доступным командам
 - **/clear** - очистка истории диалога
 - Любое текстовое сообщение - обработка через LLM
 
