@@ -5,7 +5,7 @@
 | Итерация | Описание                        | Статус       | Дата завершения |
 |----------|---------------------------------|--------------|-----------------|
 | 1️⃣       | Инструменты качества кода       | ✅ Завершено | 2025-10-11      |
-| 2️⃣       | Type safety (type hints)        | ⏳ Не начато | -               |
+| 2️⃣       | Type safety (type hints)        | ✅ Завершено | 2025-10-11      |
 | 3️⃣       | Unit-тестирование               | ⏳ Не начато | -               |
 | 4️⃣       | SOLID: Protocols и абстракции   | ⏳ Не начато | -               |
 | 5️⃣       | Pydantic Config + валидация     | ⏳ Не начато | -               |
@@ -47,16 +47,16 @@
 **Тестирование:** `make typecheck` проходит без ошибок
 
 ### Задачи:
-- [ ] Добавить type hints в `src/config.py` (все методы и атрибуты)
-- [ ] Добавить type hints в `src/conversation.py` (включая return types)
-- [ ] Добавить type hints в `src/llm_client.py` (async методы)
-- [ ] Добавить type hints в `src/message_handler.py`
-- [ ] Добавить type hints в `src/bot.py` (включая aiogram типы)
-- [ ] Добавить type hints в `main.py`
-- [ ] Импортировать типы из `typing` (Optional, Protocol, Any если нужно)
-- [ ] Запустить `make typecheck` и устранить все ошибки
-- [ ] Проверить работоспособность бота: `make run`
-- [ ] Обновить файлы правил `*.mdc` и `vision.md` на соответствие сделанным изменениям
+- [x] Добавить type hints в `src/config.py` (все методы и атрибуты)
+- [x] Добавить type hints в `src/conversation.py` (включая return types)
+- [x] Добавить type hints в `src/llm_client.py` (async методы)
+- [x] Добавить type hints в `src/message_handler.py`
+- [x] Добавить type hints в `src/bot.py` (включая aiogram типы)
+- [x] Добавить type hints в `main.py`
+- [x] Импортировать типы из `typing` (Optional, Protocol, Any если нужно)
+- [x] Запустить `make typecheck` и устранить все ошибки
+- [x] Проверить работоспособность бота: `make run`
+- [x] Обновить файлы правил `*.mdc` и `vision.md` на соответствие сделанным изменениям
 
 **Проверка качества:** `mypy src/ --strict` проходит без ошибок
 

@@ -15,7 +15,7 @@ logging.basicConfig(
 )
 
 
-async def main():
+async def main() -> None:
     config = Config()
 
     # Инициализируем LLM клиент
