@@ -66,25 +66,44 @@ class ChatMessage(TypedDict):
 
 ### Структура тестов
 
-- **Unit-тесты**: `tests/unit/test_<module>.py`
-- **Integration-тесты**: `tests/integration/test_<feature>.py`
+- **Unit-тесты**: `tests/unit/test_<module>.py` (47 тестов, все зеленые ✅)
+- **Integration-тесты**: `tests/integration/test_<feature>.py` (будущее)
 - **Fixtures**: `tests/conftest.py`
 
 ### Покрытие
 
-- **Минимум 70% coverage** для всего проекта
+- **Достигнуто 79.38% coverage** (цель: ≥ 70%) ✅
 - Тестируем все публичные методы
 - Моки для внешних зависимостей (API, Protocol)
+- Coverage report: `make test-cov`
+
+### Написанные unit-тесты
+
+- **test_config.py** (12 тестов) - Pydantic валидация, type conversion, defaults
+- **test_conversation.py** (12 тестов) - add/get/clear messages, history limits, isolation
+- **test_llm_client.py** (10 тестов) - async API calls, моки AsyncOpenAI, error handling
+- **test_message_handler.py** (7 тестов) - Protocol моки, message flow
+- **test_command_handler.py** (6 тестов) - команды /start, /help, /clear
 
 ### Async тесты
 
 ```python
 import pytest
+from unittest.mock import AsyncMock, MagicMock
 
-@pytest.mark.asyncio
-async def test_handle_message():
-    ...
+async def test_handle_message(mock_llm: MagicMock) -> None:
+    mock_llm.get_response.return_value = "Response"
+    response = await handler.handle_message(123, 456, "Hello")
+    assert response == "Response"
 ```
+
+### Инструменты
+
+- **pytest** ≥ 8.0.0
+- **pytest-asyncio** ≥ 0.24.0 (auto mode)
+- **pytest-cov** ≥ 6.0.0 (--cov-fail-under=70)
+- **pytest-mock** ≥ 3.12.0
+- **unittest.mock** (AsyncMock, MagicMock, patch)
 
 ## 📦 Зависимости
 

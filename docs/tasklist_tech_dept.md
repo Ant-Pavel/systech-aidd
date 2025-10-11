@@ -8,7 +8,7 @@
 | 2️⃣       | Type safety (type hints)        | ✅ Завершено | 2025-10-11      |
 | 3️⃣       | SOLID: Protocols и абстракции   | ✅ Завершено | 2025-10-11      |
 | 4️⃣       | Pydantic Config + валидация     | ✅ Завершено | 2025-10-11      |
-| 5️⃣       | Unit-тестирование               | ⏳ Не начато | -               |
+| 5️⃣       | Unit-тестирование               | ✅ Завершено | 2025-10-11      |
 
 **Легенда статусов:**
 - ⏳ Не начато
@@ -124,17 +124,18 @@
 **Тестирование:** `make test-cov` показывает coverage ≥ 70%
 
 ### Задачи:
-- [ ] Написать `tests/unit/test_config.py` (валидация Pydantic, defaults, missing keys)
-- [ ] Написать `tests/unit/test_conversation.py` (add, get, clear, limit)
-- [ ] Написать `tests/unit/test_llm_client.py` (моки для API, обработка ошибок)
-- [ ] Написать `tests/unit/test_message_handler.py` (моки для Protocol зависимостей)
-- [ ] Написать `tests/unit/test_bot.py` (команды /start, /help, /clear)
-- [ ] Добавить fixtures в `tests/conftest.py` (config, conversation, мок-объекты)
-- [ ] Использовать `pytest-asyncio` для async тестов
-- [ ] Использовать `unittest.mock` для моков внешних зависимостей
-- [ ] Запустить `make test-cov` и убедиться в покрытии ≥ 70%
-- [ ] Запустить `make quality` - полная проверка всего pipeline
-- [ ] Обновить файлы правил `*.mdc` и `vision.md` на соответствие сделанным изменениям
+- [x] Написать `tests/unit/test_config.py` (валидация Pydantic, defaults, missing keys)
+- [x] Написать `tests/unit/test_conversation.py` (add, get, clear, limit)
+- [x] Написать `tests/unit/test_llm_client.py` (моки для API, обработка ошибок)
+- [x] Написать `tests/unit/test_message_handler.py` (моки для Protocol зависимостей)
+- [x] Написать `tests/unit/test_command_handler.py` (команды /start, /help, /clear)
+- [x] Добавить `pytest-mock>=3.12.0` в зависимости
+- [x] Настроить pytest coverage в `pyproject.toml` (addopts: --cov=src, --cov-fail-under=70)
+- [x] Использовать `pytest-asyncio` для async тестов
+- [x] Использовать `unittest.mock` для моков внешних зависимостей (AsyncMock, MagicMock, patch)
+- [x] Запустить `make test-cov` и убедиться в покрытии ≥ 70% (получено 79.38%)
+- [x] Запустить `make quality` - полная проверка всего pipeline
+- [x] Обновить файлы правил и `vision.md` на соответствие сделанным изменениям
 
 **Проверка качества:** `pytest --cov=src --cov-report=term-missing` показывает ≥ 70%
 

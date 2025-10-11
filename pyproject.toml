@@ -18,6 +18,7 @@ dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.24.0",
     "pytest-cov>=6.0.0",
+    "pytest-mock>=3.12.0",
 ]
 
 [build-system]
@@ -46,6 +47,7 @@ select = [
 ignore = [
     "RUF001",  # Allow cyrillic characters in strings (Russian text)
     "RUF002",  # Allow cyrillic characters in docstrings (Russian documentation)
+    "RUF003",  # Allow cyrillic characters in comments (Russian comments)
 ]
 
 [tool.mypy]
@@ -75,5 +77,11 @@ asyncio_mode = "auto"
 markers = [
     "unit: Unit tests",
     "integration: Integration tests",
+]
+addopts = [
+    "--cov=src",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-fail-under=70",
 ]
 

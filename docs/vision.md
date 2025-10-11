@@ -338,3 +338,97 @@ MAX_HISTORY_MESSAGES=10
 - Содержимое сообщений логируется для понимания контекста ошибок
 - При необходимости можно перенаправить stdout в файл через shell
 
+## 10. Тестирование
+
+### Статистика тестирования
+
+- **47 unit-тестов** - все зеленые ✅
+- **Coverage: 79.38%** (цель: ≥ 70%) ✅
+- **Тестируемые модули**: config, conversation, llm_client, message_handler, command_handler
+
+### Структура тестов
+
+```
+tests/
+├── unit/
+│   ├── test_config.py           # 12 тестов (Pydantic валидация)
+│   ├── test_conversation.py     # 12 тестов (история диалогов)
+│   ├── test_llm_client.py       # 10 тестов (async API, моки)
+│   ├── test_message_handler.py  # 7 тестов (Protocol моки)
+│   └── test_command_handler.py  # 6 тестов (команды бота)
+├── integration/                  # Будущее
+└── conftest.py                   # Общие fixtures
+```
+
+### Используемые инструменты
+
+- **pytest** ≥ 8.0.0 - фреймворк тестирования
+- **pytest-asyncio** ≥ 0.24.0 - поддержка async/await (mode=auto)
+- **pytest-cov** ≥ 6.0.0 - измерение coverage (fail-under=70)
+- **pytest-mock** ≥ 3.12.0 - моки и патчи
+- **unittest.mock** - AsyncMock, MagicMock, patch
+
+### Примеры тестов
+
+**Config (Pydantic валидация):**
+```python
+def test_config_missing_telegram_token(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Проверка ошибки при отсутствии обязательного параметра."""
+    monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
+    with pytest.raises(ValidationError):
+        Config()
+```
+
+**LLMClient (async с моками):**
+```python
+async def test_get_response_success(llm_client: LLMClient) -> None:
+    """Успешный запрос к LLM API."""
+    mock_response = MagicMock()
+    mock_response.choices[0].message.content = "Response"
+    
+    with patch.object(llm_client.client.chat.completions, "create", 
+                      new_callable=AsyncMock) as mock_create:
+        mock_create.return_value = mock_response
+        response = await llm_client.get_response(messages)
+        assert response == "Response"
+```
+
+**MessageHandler (Protocol моки):**
+```python
+async def test_handle_message(mock_llm: MagicMock, mock_conv: MagicMock) -> None:
+    """Обработка сообщения с моками зависимостей."""
+    handler = MessageHandler(llm_client=mock_llm, conversation=mock_conv)
+    mock_llm.get_response.return_value = "Hi"
+    
+    response = await handler.handle_message(123, 456, "Hello")
+    
+    assert response == "Hi"
+    mock_conv.add_message.assert_called()
+```
+
+### Команды тестирования
+
+```bash
+make test          # Запуск всех тестов
+make test-cov      # Тесты с coverage report
+make quality       # Полная проверка (format + lint + typecheck + test)
+```
+
+### Coverage report
+
+```
+Name                     Stmts   Miss  Cover
+----------------------------------------------
+src/__init__.py              0      0   100%
+src/bot.py                  33     33     0%   # Точка входа, не тестируется
+src/command_handler.py      25      0   100%
+src/config.py               11      0   100%
+src/conversation.py         26      0   100%
+src/llm_client.py           36      0   100%
+src/message_handler.py      17      0   100%
+src/protocols.py             8      0   100%
+src/types.py                 4      0   100%
+----------------------------------------------
+TOTAL                      160     33    79%
+```
+
