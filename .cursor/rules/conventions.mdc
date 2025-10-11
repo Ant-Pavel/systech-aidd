@@ -1,7 +1,6 @@
 ---
-alwaysApply: true
+alwaysApply: false
 ---
-
 # Coding Conventions
 
 > Правила для code ассистента при генерации кода.  
@@ -22,9 +21,9 @@ alwaysApply: true
 
 **Стиль кода** (см. @vision.md раздел 2)
 - Используй **async/await** для всех I/O операций
-- **Без type hints** - для скорости разработки MVP
-- **Без юнит-тестов** на этапе MVP
-- **Без линтеров** на этапе MVP
+- **Type hints обязательны** - строгая типизация (mypy strict mode)
+- **Тестирование обязательно** - минимум 70% coverage
+- **Форматирование и линтинг** - ruff format + ruff check
 - Понятные имена переменных и функций
 - Короткие методы с одной ответственностью
 
@@ -86,5 +85,279 @@ alwaysApply: true
 - Коммиты на русском языке
 - Атомарные изменения (один коммит = одна задача)
 - Осмысленные сообщения
+- Запускать `make quality` перед коммитом
+
+---
+
+## Требования к качеству кода
+
+### Форматирование (ruff format)
+
+**Основные правила:**
+- Длина строки: **100 символов**
+- Кавычки: двойные для строк
+- Trailing comma в многострочных конструкциях
+- Автоматическое форматирование через `make format`
+
+**Команда:**
+```bash
+make format  # Отформатировать весь код
+```
+
+### Линтинг (ruff check)
+
+**Включенные правила:**
+- **E** - pycodestyle errors
+- **F** - pyflakes
+- **I** - isort (сортировка импортов)
+- **N** - pep8-naming
+- **UP** - pyupgrade (современный Python синтаксис)
+- **B** - flake8-bugbear (потенциальные баги)
+- **C4** - flake8-comprehensions (оптимизация comprehensions)
+- **SIM** - flake8-simplify (упрощение кода)
+- **RUF** - ruff-specific rules
+
+**Команды:**
+```bash
+make lint         # Проверка линтером
+make lint-fix     # Автофикс (если доступно)
+```
+
+### Type Checking (mypy)
+
+**Режим:** strict mode
+**Требования:**
+- Type hints на всех функциях и методах
+- Аннотации параметров и возвращаемых значений
+- Protocol для абстракций
+- Без Any (кроме обоснованных случаев)
+
+**Пример:**
+```python
+from typing import Protocol
+
+class ConversationStorageProtocol(Protocol):
+    def add_message(self, user_id: int, chat_id: int, role: str, content: str) -> None: ...
+    def get_history(self, user_id: int, chat_id: int) -> list[dict[str, str]]: ...
+
+async def handle_message(
+    user_id: int, 
+    chat_id: int, 
+    text: str
+) -> str:
+    ...
+```
+
+**Команда:**
+```bash
+make typecheck  # Проверка типов
+```
+
+### Тестирование (pytest)
+
+**Требования:**
+- Минимум **70% coverage**
+- Unit-тесты для всех модулей
+- Использование моков для внешних зависимостей
+- Асинхронные тесты через pytest-asyncio
+
+**Структура тестов:**
+```
+tests/
+├── unit/
+│   ├── test_config.py
+│   ├── test_conversation.py
+│   ├── test_llm_client.py
+│   ├── test_message_handler.py
+│   └── test_bot.py
+├── integration/
+│   └── test_bot_flow.py
+└── conftest.py  # Fixtures
+```
+
+**Пример теста:**
+```python
+import pytest
+from src.conversation import Conversation
+
+@pytest.fixture
+def conversation() -> Conversation:
+    return Conversation(max_history_messages=3)
+
+def test_add_message_limits_history(conversation: Conversation) -> None:
+    user_id, chat_id = 1, 1
+    
+    for i in range(5):
+        conversation.add_message(user_id, chat_id, "user", f"msg{i}")
+    
+    history = conversation.get_history(user_id, chat_id)
+    assert len(history) == 3
+    assert history[0]["content"] == "msg2"
+```
+
+**Команды:**
+```bash
+make test        # Запуск тестов
+make test-cov    # Тесты + coverage report
+```
+
+### Полная проверка (make quality)
+
+**Выполняет:**
+1. `make format` - форматирование
+2. `make lint` - линтинг
+3. `make typecheck` - проверка типов
+4. `make test` - тесты
+
+**Команда:**
+```bash
+make quality  # Полная проверка качества
+```
+
+**Обязательно запускать перед коммитом!**
+
+---
+
+## Лучшие практики Python
+
+### 1. Type Safety
+
+**Всегда используй type hints:**
+```python
+# ❌ Плохо
+def process_data(data):
+    return data.strip()
+
+# ✅ Хорошо
+def process_data(data: str) -> str:
+    return data.strip()
+```
+
+**Protocol для абстракций:**
+```python
+from typing import Protocol
+
+# ✅ Определяй контракт через Protocol
+class StorageProtocol(Protocol):
+    def save(self, key: str, value: str) -> None: ...
+    def load(self, key: str) -> str | None: ...
+```
+
+### 2. Обработка ошибок
+
+**Специфичные исключения:**
+```python
+# ❌ Плохо
+except Exception:
+    pass
+
+# ✅ Хорошо
+except (APITimeoutError, APIError) as e:
+    logger.error(f"API error: {e}", exc_info=True)
+    raise Exception("User-friendly message")
+```
+
+### 3. Async/Await
+
+**Используй async для I/O:**
+```python
+# ✅ Async для всех I/O операций
+async def fetch_data(url: str) -> dict[str, Any]:
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url)
+        return response.json()
+```
+
+### 4. Dependency Injection
+
+**Передавай зависимости явно:**
+```python
+# ✅ Зависимости через конструктор
+class MessageHandler:
+    def __init__(
+        self, 
+        llm_client: LLMClientProtocol,
+        conversation: ConversationStorageProtocol
+    ) -> None:
+        self.llm_client = llm_client
+        self.conversation = conversation
+```
+
+### 5. Immutability
+
+**Используй неизменяемые структуры где возможно:**
+```python
+from dataclasses import dataclass
+
+# ✅ Immutable dataclass
+@dataclass(frozen=True)
+class Message:
+    role: str
+    content: str
+```
+
+### 6. Code Comprehensions
+
+**Предпочитай comprehensions:**
+```python
+# ❌ Плохо
+result = []
+for item in items:
+    if item.is_valid():
+        result.append(item.value)
+
+# ✅ Хорошо
+result = [item.value for item in items if item.is_valid()]
+```
+
+### 7. Context Managers
+
+**Используй context managers для ресурсов:**
+```python
+# ✅ Автоматическое освобождение ресурсов
+async with AsyncOpenAI(api_key=key) as client:
+    response = await client.chat.completions.create(...)
+```
+
+### 8. Logging
+
+**Структурированное логирование:**
+```python
+# ✅ Детальные логи с контекстом
+logger.info(f"Processing message from user {user_id} in chat {chat_id}")
+logger.error(f"API error: {error}", exc_info=True)
+```
+
+### 9. Configuration
+
+**Pydantic для конфигурации:**
+```python
+from pydantic_settings import BaseSettings
+
+# ✅ Валидация через Pydantic
+class Config(BaseSettings):
+    telegram_bot_token: str
+    openrouter_api_key: str
+    llm_temperature: float = 0.7
+    
+    model_config = {"env_file": ".env"}
+```
+
+### 10. Testing Best Practices
+
+**Моки для внешних зависимостей:**
+```python
+from unittest.mock import AsyncMock
+
+# ✅ Мокаем внешние API
+async def test_llm_response():
+    mock_client = AsyncMock()
+    mock_client.get_response.return_value = "test"
+    
+    handler = MessageHandler(mock_client, mock_conversation)
+    result = await handler.handle_message(1, 1, "test")
+    
+    assert result == "test"
+```
 
 

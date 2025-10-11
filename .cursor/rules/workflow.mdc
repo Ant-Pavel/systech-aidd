@@ -1,7 +1,6 @@
 ---
-alwaysApply: true
+alwaysApply: false
 ---
-
 # Workflow разработки
 
 ## 🎯 Основной принцип
