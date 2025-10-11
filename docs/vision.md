@@ -50,13 +50,15 @@
 systech-aidd/
 ├── src/
 │   ├── bot.py              # Координация bot/dispatcher и регистрация обработчиков
-│   ├── command_handler.py  # Обработчик команд бота (/start, /help, /clear)
+│   ├── command_handler.py  # Обработчик команд бота (/start, /help, /clear, /role)
 │   ├── message_handler.py  # Обработка текстовых сообщений пользователя
 │   ├── llm_client.py       # Класс для работы с LLM через Openrouter
 │   ├── conversation.py     # Класс для хранения истории диалога
 │   ├── config.py           # Класс конфигурации (Pydantic BaseSettings)
 │   ├── protocols.py        # Protocol интерфейсы для абстракций (DIP)
 │   └── types.py            # TypedDict для структур данных (ChatMessage)
+├── prompts/
+│   └── nutritionist.txt    # Системный промпт для роли нутрициолога
 ├── tests/
 │   ├── unit/               # Unit-тесты модулей
 │   ├── integration/        # Интеграционные тесты
@@ -73,11 +75,11 @@ systech-aidd/
 ### Основные модули
 
 - **bot.py** - координация bot/dispatcher, регистрация обработчиков команд и сообщений
-- **command_handler.py** - обработка команд бота (/start, /help, /clear)
+- **command_handler.py** - обработка команд бота (/start, /help, /clear, /role)
 - **message_handler.py** - обработка текстовых сообщений от пользователя
-- **llm_client.py** - взаимодействие с Openrouter через openai клиент
+- **llm_client.py** - взаимодействие с Openrouter через openai клиент, загрузка системного промпта
 - **conversation.py** - управление историей диалога (в памяти, ключ: user_id + chat_id)
-- **config.py** - загрузка и валидация конфигурации (Pydantic BaseSettings)
+- **config.py** - загрузка и валидация конфигурации, путь к системному промпту (Pydantic BaseSettings)
 - **protocols.py** - Protocol интерфейсы для Dependency Inversion Principle
 - **types.py** - TypedDict структуры данных (ChatMessage)
 
@@ -115,12 +117,12 @@ CommandHandler              MessageHandler ← Conversation
 
 ### Классы и их ответственность
 
-- **Config** - хранит настройки (токены, модель LLM, лимиты и т.д.)
+- **Config** - хранит настройки (токены, модель LLM, лимиты, путь к системному промпту)
 - **TelegramBot** - координация Bot/Dispatcher, регистрация обработчиков
-- **CommandHandler** - обработка команд бота (/start, /help, /clear)
+- **CommandHandler** - обработка команд бота (/start, /help, /clear, /role)
 - **MessageHandler** - координирует обработку текстовых сообщений
 - **Conversation** - хранит и управляет историей диалогов (последние 10 сообщений)
-- **LLMClient** - отправляет запросы к LLM API
+- **LLMClient** - загружает системный промпт из файла, отправляет запросы к LLM API
 
 ### Protocol интерфейсы (DIP)
 
@@ -135,8 +137,9 @@ CommandHandler              MessageHandler ← Conversation
 
 - **/start** - приветствие и инструкция
 - **/help** - справка по доступным командам
-- **/clear** - очистка истории диалога
-- Любое текстовое сообщение - обработка через LLM
+- **/clear** - очистка истории диалога (альтернативное название: /new)
+- **/role** - отображение текущей роли бота и его функций
+- Любое текстовое сообщение - обработка через LLM с учетом роли
 
 ## 5. Модель данных
 
@@ -186,12 +189,15 @@ conversations = {
 - Использование официального клиента `openai` с настройкой на Openrouter
 - Base URL: `https://openrouter.ai/api/v1`
 - Передача API ключа Openrouter через заголовки
+- Загрузка системного промпта из файла при инициализации
+- Системный промпт автоматически добавляется в начало каждого запроса
 
 ### Формат запроса
 
 ```python
-# Отправляем историю диалога
+# Системный промпт + история диалога
 messages = [
+    {"role": "system", "content": "Ты профессиональный нутрициолог..."},  # Из файла
     {"role": "user", "content": "привет"},
     {"role": "assistant", "content": "Здравствуйте!"},
     {"role": "user", "content": "как дела?"}
@@ -201,7 +207,7 @@ messages = [
 ### Параметры по умолчанию
 
 - **model**: `anthropic/claude-3.5-sonnet` (Claude Sonnet 4.5)
-- **messages**: история диалога из Conversation
+- **messages**: системный промпт + история диалога из Conversation
 - **temperature**: `0.7` (баланс между креативностью и последовательностью)
 - **max_tokens**: `1000` (достаточно для развернутых ответов)
 
@@ -235,12 +241,18 @@ messages = [
 
 ### Сценарий 4: Очистка истории
 
-1. Пользователь отправляет `/clear`
+1. Пользователь отправляет `/clear` или `/new`
 2. Бот удаляет всю историю диалога для этого пользователя
 3. Бот подтверждает очистку сообщением
 4. Следующий диалог начинается с чистого листа
 
-### Сценарий 5: Обработка ошибок
+### Сценарий 5: Отображение роли
+
+1. Пользователь отправляет `/role`
+2. Бот отправляет описание текущей роли и функций
+3. Пользователь понимает, чем может помочь бот
+
+### Сценарий 6: Обработка ошибок
 
 1. Пользователь отправляет сообщение
 2. Происходит ошибка при запросе к LLM
@@ -278,6 +290,9 @@ LLM_MODEL=anthropic/claude-3.5-sonnet
 LLM_TEMPERATURE=0.7
 LLM_MAX_TOKENS=1000
 LLM_TIMEOUT=30
+
+# System Prompt (опционально)
+SYSTEM_PROMPT_PATH=prompts/nutritionist.txt
 
 # Conversation (опционально)
 MAX_HISTORY_MESSAGES=10
