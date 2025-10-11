@@ -1,4 +1,4 @@
-.PHONY: install run clean format lint lint-fix typecheck test test-cov quality
+.PHONY: install run clean format lint lint-fix typecheck test test-cov quality quality-no-test
 
 install:
 	uv sync --all-extras
@@ -25,6 +25,8 @@ test-cov:
 	uv run pytest tests/ --cov=src --cov-report=term-missing --cov-report=html
 
 quality: format lint typecheck test
+
+quality-no-test: format lint typecheck
 
 clean:
 	rm -rf .venv __pycache__ src/__pycache__ tests/__pycache__ .pytest_cache .mypy_cache .ruff_cache htmlcov .coverage
