@@ -164,3 +164,22 @@ class TestConfig:
 
         assert config.telegram_bot_token == "test_token"
         assert config.openrouter_api_key == "test_key"
+
+    def test_config_system_prompt_path_default(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Тест дефолтного значения system_prompt_path."""
+        monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "test_token")
+        monkeypatch.setenv("OPENROUTER_API_KEY", "test_key")
+
+        config = Config()
+
+        assert config.system_prompt_path == "prompts/nutritionist.txt"
+
+    def test_config_system_prompt_path_custom(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Тест переопределения system_prompt_path через переменную окружения."""
+        monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "test_token")
+        monkeypatch.setenv("OPENROUTER_API_KEY", "test_key")
+        monkeypatch.setenv("SYSTEM_PROMPT_PATH", "custom/path/prompt.txt")
+
+        config = Config()
+
+        assert config.system_prompt_path == "custom/path/prompt.txt"

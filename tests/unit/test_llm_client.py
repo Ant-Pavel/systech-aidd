@@ -196,3 +196,92 @@ class TestLLMClient:
         assert client.max_tokens == 2000
         assert client.timeout == 60
         assert client.client is not None
+
+    def test_load_system_prompt_success(self, tmp_path) -> None:
+        """Тест успешной загрузки системного промпта из файла."""
+        # Создаем временный файл с промптом
+        prompt_file = tmp_path / "test_prompt.txt"
+        prompt_content = "You are a helpful assistant."
+        prompt_file.write_text(prompt_content, encoding="utf-8")
+
+        client = LLMClient(
+            api_key="test_key",
+            model="test_model",
+            temperature=0.7,
+            max_tokens=1000,
+            timeout=30,
+            system_prompt_path=str(prompt_file),
+        )
+
+        assert client.system_prompt == prompt_content
+
+    def test_load_system_prompt_file_not_found(self) -> None:
+        """Тест обработки ошибки когда файл промпта не существует."""
+        with pytest.raises(FileNotFoundError):
+            LLMClient(
+                api_key="test_key",
+                model="test_model",
+                temperature=0.7,
+                max_tokens=1000,
+                timeout=30,
+                system_prompt_path="nonexistent/prompt.txt",
+            )
+
+    def test_load_system_prompt_empty_file(self, tmp_path) -> None:
+        """Тест обработки ошибки когда файл промпта пустой."""
+        # Создаем пустой временный файл
+        prompt_file = tmp_path / "empty_prompt.txt"
+        prompt_file.write_text("", encoding="utf-8")
+
+        with pytest.raises(ValueError, match="System prompt file is empty"):
+            LLMClient(
+                api_key="test_key",
+                model="test_model",
+                temperature=0.7,
+                max_tokens=1000,
+                timeout=30,
+                system_prompt_path=str(prompt_file),
+            )
+
+    async def test_get_response_with_system_prompt(self, tmp_path) -> None:
+        """Тест автоматического добавления system message в начало списка."""
+        # Создаем временный файл с промптом
+        prompt_file = tmp_path / "test_prompt.txt"
+        prompt_content = "You are a nutritionist."
+        prompt_file.write_text(prompt_content, encoding="utf-8")
+
+        client = LLMClient(
+            api_key="test_key",
+            model="test_model",
+            temperature=0.7,
+            max_tokens=1000,
+            timeout=30,
+            system_prompt_path=str(prompt_file),
+        )
+
+        user_messages: list[ChatMessage] = [
+            {"role": "user", "content": "Hello"},
+        ]
+
+        expected_response = "Hi!"
+
+        mock_choice = MagicMock()
+        mock_choice.message.content = expected_response
+
+        mock_response = MagicMock()
+        mock_response.choices = [mock_choice]
+
+        with patch.object(
+            client.client.chat.completions, "create", new_callable=AsyncMock
+        ) as mock_create:
+            mock_create.return_value = mock_response
+
+            response = await client.get_response(user_messages)
+
+            assert response == expected_response
+            # Проверяем что system message был добавлен в начало
+            called_messages = mock_create.call_args[1]["messages"]
+            assert len(called_messages) == 2
+            assert called_messages[0]["role"] == "system"
+            assert called_messages[0]["content"] == prompt_content
+            assert called_messages[1] == user_messages[0]

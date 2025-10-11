@@ -41,6 +41,13 @@ class Config(BaseSettings):
         description="Maximum number of messages in conversation history",
     )
 
+    # Системный промпт
+    system_prompt_path: str = Field(
+        default="prompts/nutritionist.txt",
+        min_length=1,
+        description="Path to system prompt file",
+    )
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

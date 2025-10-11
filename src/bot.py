@@ -30,6 +30,8 @@ class TelegramBot:
         self.dp.message(Command("start"))(self.command_handler.start)
         self.dp.message(Command("help"))(self.command_handler.help)
         self.dp.message(Command("clear"))(self.command_handler.clear)
+        self.dp.message(Command("new"))(self.command_handler.clear)  # Алиас для /clear
+        self.dp.message(Command("role"))(self.command_handler.role)
         self.dp.message()(self._handle_text_message)
 
     async def _handle_text_message(self, message: Message) -> None:

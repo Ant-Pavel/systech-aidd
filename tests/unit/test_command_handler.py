@@ -3,6 +3,7 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from aiogram.types import Message
 
 from src.command_handler import CommandHandler
 
@@ -45,7 +46,7 @@ class TestCommandHandler:
         # Проверяем содержание ответа
         call_args = mock_message.answer.call_args[0][0]
         assert "Привет" in call_args
-        assert "AI ассистент" in call_args
+        assert "нутрициолог" in call_args
         assert "/help" in call_args
 
     async def test_start_command_no_user(
@@ -177,3 +178,43 @@ class TestCommandHandler:
             response = call[0][0]
             assert isinstance(response, str)
             assert len(response) > 0
+
+    async def test_role_command(
+        self, command_handler: CommandHandler, mock_message: MagicMock
+    ) -> None:
+        """Тест команды /role - отображение роли бота."""
+        await command_handler.role(mock_message)
+
+        mock_message.answer.assert_called_once()
+        response = mock_message.answer.call_args[0][0]
+
+        # Проверяем что в ответе упоминается роль
+        assert "нутрициолог" in response.lower() or "nutritionist" in response.lower()
+        assert len(response) > 0
+
+    async def test_role_command_no_user(self, command_handler: CommandHandler) -> None:
+        """Тест команды /role без пользователя."""
+        mock_message = MagicMock(spec=Message)
+        mock_message.from_user = None
+        mock_message.answer = AsyncMock()
+
+        await command_handler.role(mock_message)
+
+        # Команда не должна вызвать answer если нет пользователя
+        mock_message.answer.assert_not_called()
+
+    async def test_new_command_alias(
+        self, command_handler: CommandHandler, mock_message: MagicMock
+    ) -> None:
+        """Тест что /new является алиасом для /clear."""
+        # Команда /new должна использовать тот же метод clear()
+        # Проверяем что она очищает историю и отправляет ответ
+        await command_handler.clear(mock_message)
+
+        # Проверяем что ответ был отправлен
+        mock_message.answer.assert_called_once()
+        response = mock_message.answer.call_args[0][0]
+
+        # Проверяем содержание ответа
+        assert "очищена" in response.lower() or "clear" in response.lower()
+        assert len(response) > 0

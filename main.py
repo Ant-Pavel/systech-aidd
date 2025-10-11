@@ -26,6 +26,7 @@ async def main() -> None:
         temperature=config.llm_temperature,
         max_tokens=config.llm_max_tokens,
         timeout=config.llm_timeout,
+        system_prompt_path=config.system_prompt_path,
     )
 
     # Инициализируем хранилище истории диалогов
