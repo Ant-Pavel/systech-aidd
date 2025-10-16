@@ -1,3 +1,5 @@
+"""Управление историей диалогов в памяти."""
+
 import logging
 
 from src.types import ChatMessage
