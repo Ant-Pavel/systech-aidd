@@ -249,6 +249,26 @@ make clean                # Очистить временные файлы
 - Минимум абстракций
 - Явное лучше неявного
 
+## 📚 Документация
+
+**Полная документация проекта:** [docs/README.md](docs/README.md)
+
+### Гайды для разработчиков
+
+- 🚀 [Getting Started](docs/guides/01_getting_started.md) - быстрый старт
+- 🎨 [Visual Architecture](docs/guides/02_visual_architecture.md) - **12 типов диаграмм**
+- 🏗️ [Architecture Overview](docs/guides/03_architecture_overview.md) - обзор архитектуры
+- 🗺️ [Codebase Tour](docs/guides/04_codebase_tour.md) - структура кода
+- ⚙️ [Configuration & Secrets](docs/guides/07_configuration_secrets.md) - конфигурация
+- 🔨 [Development Workflow](docs/guides/08_development_workflow.md) - разработка
+- 🧪 [Testing Guide](docs/guides/09_testing_guide.md) - тестирование
+
+### Проектная документация
+
+- [Vision](docs/vision.md) - техническое видение
+- [Conventions](docs/conventions.md) - соглашения разработки
+- [Review #0001](docs/reviews/review_0001.md) - код-ревью (оценка 9/10)
+
 
 ## 👤 Автор
 
