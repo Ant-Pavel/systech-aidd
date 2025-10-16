@@ -15,7 +15,7 @@ class TestCommandHandler:
     def mock_conversation(self) -> MagicMock:
         """Фикстура для мока Conversation."""
         mock = MagicMock()
-        mock.clear_history = MagicMock()
+        mock.clear_history = AsyncMock()
         return mock
 
     @pytest.fixture

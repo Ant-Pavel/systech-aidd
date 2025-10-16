@@ -21,7 +21,10 @@
 - **python-dotenv** - загрузка переменных окружения из .env файла (используется через pydantic)
 
 ### Хранение данных
-- **В памяти** - история диалогов хранится в оперативной памяти (для MVP)
+- **PostgreSQL 16** - персистентное хранение истории диалогов
+- **asyncpg** - асинхронный драйвер для PostgreSQL
+- **Alembic** - управление миграциями базы данных
+- **Docker Compose** - для локального окружения разработки
 
 ## 2. Принципы разработки
 
@@ -49,27 +52,35 @@
 ```
 systech-aidd/
 ├── src/
-│   ├── bot.py              # Координация bot/dispatcher и регистрация обработчиков
-│   ├── command_handler.py  # Обработчик команд бота (/start, /help, /clear, /role)
-│   ├── message_handler.py  # Обработка текстовых сообщений пользователя
-│   ├── llm_client.py       # Класс для работы с LLM через Openrouter
-│   ├── conversation.py     # Класс для хранения истории диалога
-│   ├── config.py           # Класс конфигурации (Pydantic BaseSettings)
-│   ├── protocols.py        # Protocol интерфейсы для абстракций (DIP)
-│   └── types.py            # TypedDict для структур данных (ChatMessage)
+│   ├── bot.py                   # Координация bot/dispatcher и регистрация обработчиков
+│   ├── command_handler.py       # Обработчик команд бота (/start, /help, /clear, /role)
+│   ├── message_handler.py       # Обработка текстовых сообщений пользователя
+│   ├── llm_client.py            # Класс для работы с LLM через Openrouter
+│   ├── conversation.py          # In-memory хранение истории (для тестов)
+│   ├── database_conversation.py # PostgreSQL хранение истории (prod)
+│   ├── database.py              # Connection pool и утилиты для asyncpg
+│   ├── config.py                # Класс конфигурации (Pydantic BaseSettings)
+│   ├── protocols.py             # Protocol интерфейсы для абстракций (DIP)
+│   └── types.py                 # TypedDict для структур данных (ChatMessage)
+├── alembic/
+│   ├── versions/                # Миграции базы данных
+│   ├── env.py                   # Конфигурация Alembic (async mode)
+│   └── script.py.mako           # Шаблон для новых миграций
 ├── prompts/
-│   └── nutritionist.txt    # Системный промпт для роли нутрициолога
+│   └── nutritionist.txt         # Системный промпт для роли нутрициолога
 ├── tests/
-│   ├── unit/               # Unit-тесты модулей
-│   ├── integration/        # Интеграционные тесты
-│   └── conftest.py         # Pytest fixtures
-├── main.py                 # Точка входа в приложение
-├── .env.example            # Пример файла с переменными окружения
-├── .env                    # Файл с переменными окружения (в .gitignore)
-├── pyproject.toml          # Конфигурация uv, зависимости, инструменты качества
-├── Makefile                # Команды для сборки, тестирования, проверки качества
-├── docs/                   # Документация проекта
-└── README.md               # Инструкции по запуску
+│   ├── unit/                    # Unit-тесты модулей
+│   ├── integration/             # Интеграционные тесты
+│   └── conftest.py              # Pytest fixtures
+├── main.py                      # Точка входа в приложение
+├── docker-compose.yml           # PostgreSQL для локальной разработки
+├── alembic.ini                  # Конфигурация Alembic
+├── .env.example                 # Пример файла с переменными окружения
+├── .env                         # Файл с переменными окружения (в .gitignore)
+├── pyproject.toml               # Конфигурация uv, зависимости, инструменты качества
+├── Makefile                     # Команды для сборки, тестирования, проверки качества
+├── docs/                        # Документация проекта
+└── README.md                    # Инструкции по запуску
 ```
 
 ### Основные модули
@@ -78,8 +89,10 @@ systech-aidd/
 - **command_handler.py** - обработка команд бота (/start, /help, /clear, /role)
 - **message_handler.py** - обработка текстовых сообщений от пользователя
 - **llm_client.py** - взаимодействие с Openrouter через openai клиент, загрузка системного промпта
-- **conversation.py** - управление историей диалога (в памяти, ключ: user_id + chat_id)
-- **config.py** - загрузка и валидация конфигурации, путь к системному промпту (Pydantic BaseSettings)
+- **conversation.py** - управление историей диалога (в памяти, используется для тестов)
+- **database_conversation.py** - управление историей диалога в PostgreSQL (production)
+- **database.py** - утилиты для работы с asyncpg (connection pool, init_db, close_pool)
+- **config.py** - загрузка и валидация конфигурации (Pydantic BaseSettings)
 - **protocols.py** - Protocol интерфейсы для Dependency Inversion Principle
 - **types.py** - TypedDict структуры данных (ChatMessage)
 
@@ -97,11 +110,11 @@ User (Telegram)
     ↓
 TelegramBot (aiogram Bot + Dispatcher) 
     ↓                              ↓
-CommandHandler              MessageHandler ← Conversation
+CommandHandler              MessageHandler ← DatabaseConversation
     ↓                              ↓               (история)
-(/start, /help, /clear)        LLMClient
-                                   ↓
-                             Openrouter API
+(/start, /help, /clear)        LLMClient          ↓
+                                   ↓           PostgreSQL
+                             Openrouter API      (asyncpg)
 ```
 
 ### Поток обработки сообщения
@@ -109,20 +122,23 @@ CommandHandler              MessageHandler ← Conversation
 1. **User** отправляет сообщение в Telegram
 2. **Bot** получает сообщение через aiogram (polling)
 3. **Bot** передает сообщение в **MessageHandler**
-4. **MessageHandler** получает историю из **Conversation** по ключу (user_id, chat_id)
-5. **MessageHandler** формирует запрос к **LLMClient** (контекст + текущее сообщение)
-6. **LLMClient** отправляет запрос в Openrouter и получает ответ
-7. **MessageHandler** сохраняет диалог в **Conversation**
-8. **Bot** отправляет ответ пользователю
+4. **MessageHandler** получает историю из **DatabaseConversation** по ключу (user_id, chat_id)
+5. **DatabaseConversation** выполняет SQL запрос к PostgreSQL через asyncpg pool
+6. **MessageHandler** формирует запрос к **LLMClient** (контекст + текущее сообщение)
+7. **LLMClient** отправляет запрос в Openrouter и получает ответ
+8. **MessageHandler** сохраняет user и assistant сообщения в **DatabaseConversation**
+9. **DatabaseConversation** записывает сообщения в PostgreSQL (с метаданными)
+10. **Bot** отправляет ответ пользователю
 
 ### Классы и их ответственность
 
-- **Config** - хранит настройки (токены, модель LLM, лимиты, путь к системному промпту)
+- **Config** - хранит настройки (токены, модель LLM, лимиты, DATABASE_URL)
 - **TelegramBot** - координация Bot/Dispatcher, регистрация обработчиков
 - **CommandHandler** - обработка команд бота (/start, /help, /clear, /role)
 - **MessageHandler** - координирует обработку текстовых сообщений
-- **Conversation** - хранит и управляет историей диалогов (последние 10 сообщений)
+- **DatabaseConversation** - хранит и управляет историей диалогов в PostgreSQL (soft delete, последние N сообщений)
 - **LLMClient** - загружает системный промпт из файла, отправляет запросы к LLM API
+- **database.py** - управление connection pool, init_db(), close_pool()
 
 ### Protocol интерфейсы (DIP)
 
@@ -145,38 +161,51 @@ CommandHandler              MessageHandler ← Conversation
 
 ### Структура сообщения
 
-Формат совместим с OpenAI API:
+Формат совместим с OpenAI API с дополнительными метаданными:
 ```python
 {
     "role": "user" | "assistant",
-    "content": "текст сообщения"
+    "content": "текст сообщения",
+    "created_at": "2025-10-16T12:00:00",  # ISO 8601 формат
+    "message_length": 13  # длина в символах
 }
 ```
 
 ### Хранение истории диалогов
 
-```python
-# Структура в памяти
-conversations = {
-    (user_id, chat_id): [
-        {"role": "user", "content": "привет"},
-        {"role": "assistant", "content": "Здравствуйте! Чем могу помочь?"},
-        ...
-    ]
-}
+История диалогов хранится в PostgreSQL в таблице `messages`:
+
+```sql
+CREATE TABLE messages (
+    id SERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    chat_id BIGINT NOT NULL,
+    role VARCHAR(20) NOT NULL,
+    content TEXT NOT NULL,
+    message_length INTEGER NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL  -- Soft delete
+);
 ```
 
-### Класс Conversation
+**Стратегия Soft Delete:**
+- Данные физически не удаляются из БД
+- При "удалении" устанавливается `deleted_at = NOW()`
+- При выборке фильтруются строки `WHERE deleted_at IS NULL`
+
+### Класс DatabaseConversation
 
 **Методы:**
-- `add_message(user_id, chat_id, role, content)` - добавить сообщение в историю
-- `get_history(user_id, chat_id)` - получить последние 10 сообщений
-- `clear_history(user_id, chat_id)` - очистить историю диалога
+- `add_message(user_id, chat_id, role, content)` - добавить сообщение в БД
+- `get_history(user_id, chat_id)` - получить последние N сообщений (не удаленные)
+- `clear_history(user_id, chat_id)` - soft delete истории диалога
 
 **Логика:**
-- Ключ: кортеж (user_id, chat_id)
-- Значение: список сообщений (максимум 10)
-- При добавлении нового сообщения удаляются самые старые, если превышен лимит
+- Хранение в PostgreSQL (таблица `messages`)
+- Async операции через asyncpg connection pool
+- Raw SQL запросы (без ORM)
+- Soft delete: `deleted_at IS NULL` для активных сообщений
+- Лимит последних N сообщений через `ORDER BY created_at DESC LIMIT N`
 
 ## 6. Работа с LLM
 
@@ -242,9 +271,10 @@ messages = [
 ### Сценарий 4: Очистка истории
 
 1. Пользователь отправляет `/clear` или `/new`
-2. Бот удаляет всю историю диалога для этого пользователя
-3. Бот подтверждает очистку сообщением
-4. Следующий диалог начинается с чистого листа
+2. Бот выполняет soft delete истории диалога (устанавливает deleted_at)
+3. Данные физически остаются в БД, но помечаются как удаленные
+4. Бот подтверждает очистку сообщением
+5. Следующий диалог начинается с чистого листа
 
 ### Сценарий 5: Отображение роли
 
@@ -285,6 +315,9 @@ TELEGRAM_BOT_TOKEN=your_telegram_bot_token
 # Openrouter API
 OPENROUTER_API_KEY=your_openrouter_api_key
 
+# Database (PostgreSQL)
+DATABASE_URL=postgresql+asyncpg://systech:systech_dev_password@localhost:5432/systech_aidd
+
 # LLM Settings (опциональные, есть значения по умолчанию)
 LLM_MODEL=anthropic/claude-3.5-sonnet
 LLM_TEMPERATURE=0.7
@@ -295,12 +328,12 @@ LLM_TIMEOUT=30
 SYSTEM_PROMPT_PATH=prompts/nutritionist.txt
 
 # Conversation (опционально)
-MAX_HISTORY_MESSAGES=10
+MAX_HISTORY_MESSAGES=50
 ```
 
 ### Валидация
 
-- **Обязательные**: `TELEGRAM_BOT_TOKEN`, `OPENROUTER_API_KEY`
+- **Обязательные**: `TELEGRAM_BOT_TOKEN`, `OPENROUTER_API_KEY`, `DATABASE_URL`
 - **Опциональные**: все остальные (используются значения по умолчанию)
 - При отсутствии обязательных параметров - ошибка при запуске
 
@@ -357,22 +390,24 @@ MAX_HISTORY_MESSAGES=10
 
 ### Статистика тестирования
 
-- **47 unit-тестов** - все зеленые ✅
-- **Coverage: 79.38%** (цель: ≥ 70%) ✅
-- **Тестируемые модули**: config, conversation, llm_client, message_handler, command_handler
+- **71 unit-тест** - все зеленые ✅
+- **Coverage: 78%** (цель: ≥ 70%) ✅
+- **Тестируемые модули**: config, conversation, database_conversation, database, llm_client, message_handler, command_handler
 
 ### Структура тестов
 
 ```
 tests/
 ├── unit/
-│   ├── test_config.py           # 12 тестов (Pydantic валидация)
-│   ├── test_conversation.py     # 12 тестов (история диалогов)
-│   ├── test_llm_client.py       # 10 тестов (async API, моки)
-│   ├── test_message_handler.py  # 7 тестов (Protocol моки)
-│   └── test_command_handler.py  # 6 тестов (команды бота)
-├── integration/                  # Будущее
-└── conftest.py                   # Общие fixtures
+│   ├── test_config.py                  # 15 тестов (Pydantic валидация)
+│   ├── test_conversation.py            # 11 тестов (in-memory история)
+│   ├── test_database_conversation.py   # 9 тестов (PostgreSQL история, моки)
+│   ├── test_database.py                # 6 тестов (normalize_database_url)
+│   ├── test_llm_client.py              # 14 тестов (async API, моки)
+│   ├── test_message_handler.py         # 6 тестов (Protocol моки)
+│   └── test_command_handler.py         # 12 тестов (команды бота)
+├── integration/                         # Будущее
+└── conftest.py                          # Общие fixtures
 ```
 
 ### Используемые инструменты
@@ -432,18 +467,20 @@ make quality       # Полная проверка (format + lint + typecheck + 
 ### Coverage report
 
 ```
-Name                     Stmts   Miss  Cover
-----------------------------------------------
-src/__init__.py              0      0   100%
-src/bot.py                  33     33     0%   # Точка входа, не тестируется
-src/command_handler.py      25      0   100%
-src/config.py               11      0   100%
-src/conversation.py         26      0   100%
-src/llm_client.py           36      0   100%
-src/message_handler.py      17      0   100%
-src/protocols.py             8      0   100%
-src/types.py                 4      0   100%
-----------------------------------------------
-TOTAL                      160     33    79%
+Name                           Stmts   Miss  Cover   Missing
+------------------------------------------------------------
+src/__init__.py                    0      0   100%
+src/bot.py                        35     35     0%   # Точка входа, не тестируется
+src/command_handler.py            31      0   100%
+src/config.py                     13      0   100%
+src/conversation.py               27      0   100%
+src/database.py                   35     23    34%   42-52, 64-66, 73-77, 89-102
+src/database_conversation.py      31      0   100%
+src/llm_client.py                 57      0   100%
+src/message_handler.py            17      0   100%
+src/protocols.py                   8      0   100%
+src/types.py                       6      0   100%
+------------------------------------------------------------
+TOTAL                            260     58    78%
 ```
 

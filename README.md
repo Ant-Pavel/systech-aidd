@@ -6,7 +6,9 @@ AI-ассистент на базе Telegram с интеграцией LLM че�
 
 - 💬 Общение с AI через Telegram
 - 🧠 Использование различных LLM моделей (по умолчанию: GPT-OSS-20B Free)
+- 💾 Персистентное хранение истории диалогов в PostgreSQL
 - 📝 Сохранение истории диалога (последние 10 сообщений)
+- 🔄 Soft delete - данные не удаляются физически
 - ⚙️ Управление через команды
 - 🛡️ Graceful обработка ошибок
 
@@ -21,6 +23,7 @@ AI-ассистент на базе Telegram с интеграцией LLM че�
 
 - Python 3.11+
 - uv (менеджер пакетов)
+- Docker (для PostgreSQL)
 - Telegram Bot Token (получить через @BotFather)
 - Openrouter API Key (получить на https://openrouter.ai/)
 
@@ -39,32 +42,43 @@ make install
 
 Или напрямую через uv:
 ```bash
-uv sync
+uv sync --all-extras
 ```
 
-### 3. Настроить переменные окружения
+### 3. Запустить PostgreSQL
 
-Скопируйте `.env.example` в `.env`:
+Запустить базу данных через Docker Compose:
 ```bash
-cp .env.example .env
+docker-compose up -d
 ```
 
-Заполните `.env` своими значениями:
+Проверить статус:
 ```bash
-# Telegram Bot
+docker-compose ps
+```
+
+### 4. Настроить переменные окружения
+
+Создайте файл `.env` в корне проекта:
+```bash
+# Обязательные параметры
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
-
-# Openrouter API
 OPENROUTER_API_KEY=your_openrouter_api_key_here
+DATABASE_URL=postgresql+asyncpg://systech:systech_dev_password@localhost:5432/systech_aidd
 
-# LLM Settings (optional, defaults provided)
+# Опциональные (есть значения по умолчанию)
 LLM_MODEL=openai/gpt-oss-20b:free
 LLM_TEMPERATURE=0.7
 LLM_MAX_TOKENS=1000
 LLM_TIMEOUT=30
-
-# Conversation (optional)
 MAX_HISTORY_MESSAGES=10
+SYSTEM_PROMPT_PATH=prompts/nutritionist.txt
+```
+
+### 5. Применить миграции БД
+
+```bash
+uv run alembic upgrade head
 ```
 
 ## 🏃 Запуск
@@ -85,24 +99,27 @@ uv run python main.py
 ```
 systech-aidd/
 ├── src/
-│   ├── bot.py              # Главный класс Telegram бота
-│   ├── llm_client.py       # Клиент для работы с Openrouter API
-│   ├── message_handler.py  # Обработка сообщений пользователя
-│   ├── conversation.py     # Хранение истории диалогов
-│   └── config.py           # Конфигурация из .env
-├── main.py                 # Точка входа
-├── pyproject.toml          # Зависимости проекта
-├── Makefile                # Команды для сборки и запуска
-└── .env                    # Переменные окружения (не в git)
+│   ├── bot.py                    # Главный класс Telegram бота
+│   ├── llm_client.py             # Клиент для работы с Openrouter API
+│   ├── message_handler.py        # Обработка сообщений пользователя
+│   ├── database_conversation.py  # Хранение истории в PostgreSQL
+│   ├── database.py               # Connection pool и утилиты БД
+│   └── config.py                 # Конфигурация из .env
+├── alembic/                      # Миграции базы данных
+├── main.py                       # Точка входа
+├── docker-compose.yml            # PostgreSQL окружение
+├── pyproject.toml                # Зависимости проекта
+├── Makefile                      # Команды для сборки и запуска
+└── .env                          # Переменные окружения (не в git)
 ```
 
 ## 🔄 Поток обработки сообщения
 
 1. Пользователь отправляет сообщение в Telegram
 2. `TelegramBot` получает сообщение
-3. `MessageHandler` получает историю из `Conversation`
+3. `MessageHandler` получает историю из `DatabaseConversation` (PostgreSQL)
 4. `LLMClient` отправляет запрос в Openrouter
-5. Ответ сохраняется в `Conversation`
+5. Ответ сохраняется в `DatabaseConversation` с метаданными
 6. Бот отправляет ответ пользователю
 
 ## ⚙️ Конфигурация
@@ -113,6 +130,7 @@ systech-aidd/
 |----------|----------|--------------|--------------|
 | `TELEGRAM_BOT_TOKEN` | Токен Telegram бота | - | ✅ |
 | `OPENROUTER_API_KEY` | API ключ Openrouter | - | ✅ |
+| `DATABASE_URL` | PostgreSQL connection string | - | ✅ |
 | `LLM_MODEL` | Модель LLM | `openai/gpt-oss-20b:free` | ❌ |
 | `LLM_TEMPERATURE` | Температура генерации | `0.7` | ❌ |
 | `LLM_MAX_TOKENS` | Максимум токенов | `1000` | ❌ |
@@ -213,6 +231,12 @@ make quality-no-test      # Без тестов: format + lint + typecheck
 
 # Очистка
 make clean                # Очистить временные файлы
+
+# База данных
+docker-compose up -d      # Запустить PostgreSQL
+docker-compose down       # Остановить PostgreSQL
+uv run alembic upgrade head    # Применить миграции
+uv run alembic downgrade -1    # Откатить последнюю миграцию
 ```
 
 ### Логирование
@@ -262,12 +286,17 @@ make clean                # Очистить временные файлы
 - ⚙️ [Configuration & Secrets](docs/guides/07_configuration_secrets.md) - конфигурация
 - 🔨 [Development Workflow](docs/guides/08_development_workflow.md) - разработка
 - 🧪 [Testing Guide](docs/guides/09_testing_guide.md) - тестирование
+- 💾 [Database Migrations](docs/guides/10_database_migrations.md) - работа с БД и миграциями
 
 ### Проектная документация
 
 - [Vision](docs/vision.md) - техническое видение
 - [Conventions](docs/conventions.md) - соглашения разработки
 - [Review #0001](docs/reviews/review_0001.md) - код-ревью (оценка 9/10)
+
+### Architecture Decision Records (ADR)
+
+- [ADR 0001](docs/adr/0001-postgresql-raw-sql-alembic.md) - выбор PostgreSQL + Raw SQL + Alembic
 
 
 ## 👤 Автор

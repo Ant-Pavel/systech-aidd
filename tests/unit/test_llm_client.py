@@ -1,5 +1,6 @@
 """Unit-тесты для модуля llm_client."""
 
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -197,7 +198,7 @@ class TestLLMClient:
         assert client.timeout == 60
         assert client.client is not None
 
-    def test_load_system_prompt_success(self, tmp_path) -> None:
+    def test_load_system_prompt_success(self, tmp_path: Path) -> None:
         """Тест успешной загрузки системного промпта из файла."""
         # Создаем временный файл с промптом
         prompt_file = tmp_path / "test_prompt.txt"
@@ -227,7 +228,7 @@ class TestLLMClient:
                 system_prompt_path="nonexistent/prompt.txt",
             )
 
-    def test_load_system_prompt_empty_file(self, tmp_path) -> None:
+    def test_load_system_prompt_empty_file(self, tmp_path: Path) -> None:
         """Тест обработки ошибки когда файл промпта пустой."""
         # Создаем пустой временный файл
         prompt_file = tmp_path / "empty_prompt.txt"
@@ -243,7 +244,7 @@ class TestLLMClient:
                 system_prompt_path=str(prompt_file),
             )
 
-    async def test_get_response_with_system_prompt(self, tmp_path) -> None:
+    async def test_get_response_with_system_prompt(self, tmp_path: Path) -> None:
         """Тест автоматического добавления system message в начало списка."""
         # Создаем временный файл с промптом
         prompt_file = tmp_path / "test_prompt.txt"

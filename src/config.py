@@ -10,6 +10,7 @@ class Config(BaseSettings):
     # Обязательные параметры
     telegram_bot_token: str = Field(..., min_length=1, description="Telegram Bot API token")
     openrouter_api_key: str = Field(..., min_length=1, description="OpenRouter API key")
+    database_url: str = Field(..., min_length=1, description="PostgreSQL connection string")
 
     # Опциональные параметры LLM
     llm_model: str = Field(

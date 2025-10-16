@@ -1,7 +1,6 @@
 ---
-alwaysApply: true
+alwaysApply: false
 ---
-
 # QA Conventions для Systech AIDD Bot
 
 ## 🎯 Философия тестирования

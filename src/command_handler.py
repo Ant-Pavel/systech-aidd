@@ -55,7 +55,7 @@ class CommandHandler:
         if message.from_user is None:
             return
         logger.info(f"Command /clear from user {message.from_user.id} in chat {message.chat.id}")
-        self.conversation.clear_history(message.from_user.id, message.chat.id)
+        await self.conversation.clear_history(message.from_user.id, message.chat.id)
         await message.answer("✅ История диалога очищена. Начнём с чистого листа!")
 
     async def role(self, message: Message) -> None:

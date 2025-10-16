@@ -13,6 +13,7 @@ class TestConfig:
         """Тест создания Config с валидными данными."""
         monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "test_token_123")
         monkeypatch.setenv("OPENROUTER_API_KEY", "test_key_123")
+        monkeypatch.setenv("DATABASE_URL", "postgresql+asyncpg://user:pass@localhost/testdb")
         monkeypatch.setenv("LLM_MODEL", "gpt-4")
         monkeypatch.setenv("LLM_TEMPERATURE", "0.8")
         monkeypatch.setenv("LLM_MAX_TOKENS", "2000")
@@ -23,6 +24,7 @@ class TestConfig:
 
         assert config.telegram_bot_token == "test_token_123"
         assert config.openrouter_api_key == "test_key_123"
+        assert config.database_url == "postgresql+asyncpg://user:pass@localhost/testdb"
         assert config.llm_model == "gpt-4"
         assert config.llm_temperature == 0.8
         assert config.llm_max_tokens == 2000
@@ -33,11 +35,13 @@ class TestConfig:
         """Тест создания Config с дефолтными значениями."""
         monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "test_token")
         monkeypatch.setenv("OPENROUTER_API_KEY", "test_key")
+        monkeypatch.setenv("DATABASE_URL", "postgresql+asyncpg://user:pass@localhost/testdb")
 
         config = Config()
 
         assert config.telegram_bot_token == "test_token"
         assert config.openrouter_api_key == "test_key"
+        assert config.database_url == "postgresql+asyncpg://user:pass@localhost/testdb"
         # Проверяем дефолтные значения
         assert config.llm_model == "openai/gpt-oss-20b:free"
         assert config.llm_temperature == 0.7
@@ -134,6 +138,7 @@ class TestConfig:
         """Тест автоматического приведения str -> int."""
         monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "test_token")
         monkeypatch.setenv("OPENROUTER_API_KEY", "test_key")
+        monkeypatch.setenv("DATABASE_URL", "postgresql+asyncpg://user:pass@localhost/testdb")
         monkeypatch.setenv("LLM_MAX_TOKENS", "5000")  # str
         monkeypatch.setenv("MAX_HISTORY_MESSAGES", "20")  # str
 
@@ -148,6 +153,7 @@ class TestConfig:
         """Тест автоматического приведения str -> float."""
         monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "test_token")
         monkeypatch.setenv("OPENROUTER_API_KEY", "test_key")
+        monkeypatch.setenv("DATABASE_URL", "postgresql+asyncpg://user:pass@localhost/testdb")
         monkeypatch.setenv("LLM_TEMPERATURE", "1.5")  # str
 
         config = Config()
@@ -159,6 +165,7 @@ class TestConfig:
         """Тест case-insensitive загрузки переменных окружения."""
         monkeypatch.setenv("telegram_bot_token", "test_token")  # lowercase
         monkeypatch.setenv("OPENROUTER_API_KEY", "test_key")
+        monkeypatch.setenv("DATABASE_URL", "postgresql+asyncpg://user:pass@localhost/testdb")
 
         config = Config()
 
@@ -169,6 +176,7 @@ class TestConfig:
         """Тест дефолтного значения system_prompt_path."""
         monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "test_token")
         monkeypatch.setenv("OPENROUTER_API_KEY", "test_key")
+        monkeypatch.setenv("DATABASE_URL", "postgresql+asyncpg://user:pass@localhost/testdb")
 
         config = Config()
 
@@ -178,6 +186,7 @@ class TestConfig:
         """Тест переопределения system_prompt_path через переменную окружения."""
         monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "test_token")
         monkeypatch.setenv("OPENROUTER_API_KEY", "test_key")
+        monkeypatch.setenv("DATABASE_URL", "postgresql+asyncpg://user:pass@localhost/testdb")
         monkeypatch.setenv("SYSTEM_PROMPT_PATH", "custom/path/prompt.txt")
 
         config = Config()

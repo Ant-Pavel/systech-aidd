@@ -53,5 +53,15 @@
         "**/.ruff_cache": true,
         "**/htmlcov": true,
         "**/uv.lock": true
-    }
+    },
+    "sqltools.connections": [
+        {
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "localhost",
+            "driver": "PostgreSQL",
+            "connectString": "postgresql+asyncpg://systech:systech_dev_password@localhost:5432/systech_aidd",
+            "name": "Anything1"
+        }
+    ]
 }

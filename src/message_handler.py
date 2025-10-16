@@ -17,7 +17,7 @@ class MessageHandler:
         logger.info(f"Received message from user {user_id} in chat {chat_id}: {text}")
 
         # Получаем историю диалога
-        history = self.conversation.get_history(user_id, chat_id)
+        history = await self.conversation.get_history(user_id, chat_id)
 
         # Добавляем текущее сообщение пользователя
         messages = [*history, ChatMessage(role="user", content=text)]
@@ -26,8 +26,8 @@ class MessageHandler:
         response = await self.llm_client.get_response(messages)
 
         # Сохраняем сообщение пользователя и ответ ассистента в историю
-        self.conversation.add_message(user_id, chat_id, "user", text)
-        self.conversation.add_message(user_id, chat_id, "assistant", response)
+        await self.conversation.add_message(user_id, chat_id, "user", text)
+        await self.conversation.add_message(user_id, chat_id, "assistant", response)
 
         logger.info(f"Response sent to user {user_id}")
         return response

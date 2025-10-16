@@ -22,9 +22,9 @@ class TestMessageHandler:
     def mock_conversation(self) -> MagicMock:
         """Фикстура для мока Conversation."""
         mock = MagicMock()
-        mock.get_history = MagicMock(return_value=[])
-        mock.add_message = MagicMock()
-        mock.clear_history = MagicMock()
+        mock.get_history = AsyncMock(return_value=[])
+        mock.add_message = AsyncMock()
+        mock.clear_history = AsyncMock()
         return mock
 
     @pytest.fixture

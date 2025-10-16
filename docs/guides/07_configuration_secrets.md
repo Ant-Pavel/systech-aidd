@@ -31,11 +31,20 @@ TELEGRAM_BOT_TOKEN=1234567890:ABCdefGHIjklMNOpqrsTUVwxyz
 
 # Openrouter API
 OPENROUTER_API_KEY=sk-or-v1-xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# Database
+DATABASE_URL=postgresql+asyncpg://systech:systech_dev_password@localhost:5432/systech_aidd
 ```
 
 **Где получить:**
 - `TELEGRAM_BOT_TOKEN` - [@BotFather](https://t.me/botfather) в Telegram
 - `OPENROUTER_API_KEY` - [openrouter.ai](https://openrouter.ai/)
+- `DATABASE_URL` - connection string для PostgreSQL (локально через Docker Compose)
+
+**Формат DATABASE_URL:**
+- SQLAlchemy формат: `postgresql+asyncpg://user:password@host:port/database` (используется Alembic)
+- asyncpg формат: `postgresql://user:password@host:port/database`
+- Приложение автоматически конвертирует SQLAlchemy формат в asyncpg формат при необходимости
 
 ### Опциональные параметры
 
@@ -59,6 +68,7 @@ SYSTEM_PROMPT_PATH=prompts/nutritionist.txt
 |----------|-----|--------------|-------------|----------|
 | `TELEGRAM_BOT_TOKEN` | `str` | - | min_length=1 | Токен Telegram бота |
 | `OPENROUTER_API_KEY` | `str` | - | min_length=1 | API ключ Openrouter |
+| `DATABASE_URL` | `str` | - | min_length=1 | PostgreSQL connection string |
 | `LLM_MODEL` | `str` | `openai/gpt-oss-20b:free` | min_length=1 | Модель LLM |
 | `LLM_TEMPERATURE` | `float` | `0.7` | 0.0-2.0 | Температура генерации |
 | `LLM_MAX_TOKENS` | `int` | `1000` | 1-100000 | Макс. токенов ответа |
