@@ -1,29 +1,39 @@
-"""FastAPI приложение для API дашборда."""
+"""FastAPI приложение для API дашборда и веб-чата."""
 
 from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.api.mock_stat_collector import MockStatCollector
 from src.api.protocols import StatCollectorProtocol
+from src.api.real_stat_collector import RealStatCollector
+from src.api.web_chat_handler import WebChatHandler
+from src.database_conversation import DatabaseConversation
+from src.protocols import LLMClientProtocol
 
-# Глобальный экземпляр StatCollector (будет инициализирован при запуске)
+# Глобальные экземпляры (будут инициализированы при запуске)
 _stat_collector: StatCollectorProtocol | None = None
+_web_chat_handler: WebChatHandler | None = None
 
 
-def create_app(stat_collector: StatCollectorProtocol | None = None) -> FastAPI:
+def create_app(
+    stat_collector: StatCollectorProtocol | None = None,
+    llm_client: LLMClientProtocol | None = None,
+    database_conversation: DatabaseConversation | None = None,
+) -> FastAPI:
     """Создать и настроить FastAPI приложение.
 
     Args:
-        stat_collector: Реализация сборщика статистики (если None, используется Mock)
+        stat_collector: Реализация сборщика статистики (если None, используется Real)
+        llm_client: Клиент для работы с LLM (для веб-чата)
+        database_conversation: Хранилище диалогов (для веб-чата)
 
     Returns:
         FastAPI: Настроенное приложение
     """
     app = FastAPI(
-        title="Systech AIDD Dashboard API",
-        description="API для предоставления статистики по диалогам Telegram-бота",
+        title="Systech AIDD Dashboard & Chat API",
+        description="API для дашборда статистики и веб-чата",
         version="1.0.0",
         docs_url="/docs",
         redoc_url="/redoc",
@@ -43,9 +53,18 @@ def create_app(stat_collector: StatCollectorProtocol | None = None) -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Устанавливаем глобальный stat_collector
-    global _stat_collector
-    _stat_collector = stat_collector or MockStatCollector()
+    # Устанавливаем глобальные зависимости
+    global _stat_collector, _web_chat_handler
+
+    _stat_collector = stat_collector or RealStatCollector()
+
+    # Инициализируем WebChatHandler если предоставлены зависимости
+    if llm_client and database_conversation:
+        _web_chat_handler = WebChatHandler(
+            database_conversation=database_conversation,
+            llm_client=llm_client,
+            max_history_messages=20,
+        )
 
     # Регистрируем роуты
     from src.api.routes import router
@@ -77,3 +96,17 @@ def get_stat_collector() -> StatCollectorProtocol:
     if _stat_collector is None:
         raise RuntimeError("StatCollector not initialized. Call create_app() first.")
     return _stat_collector
+
+
+def get_web_chat_handler() -> WebChatHandler:
+    """Dependency injection для WebChatHandler.
+
+    Returns:
+        WebChatHandler: Текущий экземпляр обработчика веб-чата
+
+    Raises:
+        RuntimeError: Если WebChatHandler не инициализирован
+    """
+    if _web_chat_handler is None:
+        raise RuntimeError("WebChatHandler not initialized. Call create_app() with required dependencies first.")
+    return _web_chat_handler

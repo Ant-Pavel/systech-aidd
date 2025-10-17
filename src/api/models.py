@@ -61,3 +61,44 @@ class DashboardStats(BaseModel):
     time_series: list[TimeSeriesPoint] = Field(
         ..., description="Временной ряд для графика", min_length=1
     )
+
+
+# ===== Модели для веб-чата =====
+
+
+class ChatRequest(BaseModel):
+    """Запрос на отправку сообщения в чат.
+
+    Attributes:
+        session_id: Уникальный ID сессии пользователя (из localStorage)
+        message: Текст сообщения пользователя
+    """
+
+    session_id: str = Field(..., description="ID сессии пользователя", min_length=1)
+    message: str = Field(..., description="Текст сообщения", min_length=1)
+
+
+class ChatMessageResponse(BaseModel):
+    """Сообщение из истории чата.
+
+    Attributes:
+        role: Роль отправителя ('user' или 'assistant')
+        content: Текст сообщения
+        created_at: Время создания сообщения (ISO format)
+    """
+
+    role: str = Field(..., description="Роль отправителя")
+    content: str = Field(..., description="Текст сообщения")
+    created_at: str = Field(..., description="Время создания (ISO format)")
+
+
+class StreamEvent(BaseModel):
+    """Событие стрима SSE.
+
+    Attributes:
+        type: Тип события ('token', 'done', 'error')
+        content: Содержимое события (chunk текста или сообщение об ошибке)
+    """
+
+    type: Literal["token", "done", "error"] = Field(..., description="Тип события")
+    content: str = Field(..., description="Содержимое события")

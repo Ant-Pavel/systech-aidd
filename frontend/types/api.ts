@@ -26,3 +26,23 @@ export interface DashboardStats {
 
 export type Period = "7d" | "30d" | "3m";
 
+/**
+ * Chat API types
+ */
+
+export interface ChatMessage {
+    role: "user" | "assistant";
+    content: string;
+    created_at: string; // ISO format
+}
+
+export interface ChatRequest {
+    session_id: string;
+    message: string;
+}
+
+export interface StreamEvent {
+    type: "token" | "done" | "error";
+    content: string;
+}
+

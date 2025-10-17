@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
+import Link from "next/link";
+import { MessageSquare } from "lucide-react";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { TimeSeriesChart } from "@/components/dashboard/TimeSeriesChart";
 import { PeriodSelector } from "@/components/dashboard/PeriodSelector";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Button } from "@/components/ui/button";
 import {
     Card,
     CardContent,
@@ -64,7 +67,14 @@ export default function Dashboard() {
                                     Мониторинг активности Telegram-бота
                                 </p>
                             </div>
-                            <ThemeToggle />
+                            <div className="flex items-center gap-2">
+                                <Link href="/chat">
+                                    <Button variant="outline" size="icon">
+                                        <MessageSquare className="h-5 w-5" />
+                                    </Button>
+                                </Link>
+                                <ThemeToggle />
+                            </div>
                         </div>
                         <div className="flex justify-end">
                             <PeriodSelector

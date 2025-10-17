@@ -20,7 +20,9 @@ class DatabaseConversation:
         """
         self.max_history_messages = max_history_messages
 
-    async def add_message(self, user_id: int, chat_id: int, role: str, content: str) -> None:
+    async def add_message(
+        self, user_id: int, chat_id: int, role: str, content: str, source: str = "telegram"
+    ) -> None:
         """Добавить сообщение в историю диалога.
 
         Args:
@@ -28,6 +30,7 @@ class DatabaseConversation:
             chat_id: ID чата Telegram
             role: Роль отправителя ('user' или 'assistant')
             content: Текст сообщения
+            source: Источник сообщения ('telegram' или 'web')
         """
         pool = await get_pool()
         message_length = len(content)
@@ -35,14 +38,15 @@ class DatabaseConversation:
         async with pool.acquire() as connection:
             await connection.execute(
                 """
-                INSERT INTO messages (user_id, chat_id, role, content, message_length)
-                VALUES ($1, $2, $3, $4, $5)
+                INSERT INTO messages (user_id, chat_id, role, content, message_length, source)
+                VALUES ($1, $2, $3, $4, $5, $6)
                 """,
                 user_id,
                 chat_id,
                 role,
                 content,
                 message_length,
+                source,
             )
 
         logger.info(

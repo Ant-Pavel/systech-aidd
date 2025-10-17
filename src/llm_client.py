@@ -1,4 +1,5 @@
 import logging
+from collections.abc import AsyncGenerator
 from pathlib import Path
 
 from openai import APIError, APITimeoutError, AsyncOpenAI, AuthenticationError, RateLimitError
@@ -95,4 +96,63 @@ class LLMClient:
 
         except Exception as e:
             logger.error(f"Unexpected error in LLM client: {e}", exc_info=True)
+            raise Exception("Произошла непредвиденная ошибка. Попробуйте еще раз.") from e
+
+    async def get_response_stream(self, messages: list[ChatMessage]) -> AsyncGenerator[str, None]:
+        """Получить ответ от LLM со стримингом по мере получения chunks.
+
+        Args:
+            messages: История сообщений диалога
+
+        Yields:
+            str: Chunks текста ответа от LLM
+
+        Raises:
+            Exception: При ошибках работы с LLM API
+        """
+        try:
+            # Добавляем системный промпт в начало, если он определен
+            final_messages = messages
+            if self.system_prompt:
+                system_message: ChatMessage = {"role": "system", "content": self.system_prompt}
+                final_messages = [system_message, *messages]
+
+            logger.info(f"Sending streaming request to LLM with {len(final_messages)} messages")
+
+            # OpenAI SDK с включенным стримингом
+            response = await self.client.chat.completions.create(
+                model=self.model,
+                messages=final_messages,  # type: ignore[arg-type]
+                temperature=self.temperature,
+                max_tokens=self.max_tokens,
+                timeout=self.timeout,
+                stream=True,  # Включаем стриминг
+            )
+
+            # Стримим chunks по мере получения
+            async for chunk in response:
+                if chunk.choices[0].delta.content:
+                    yield chunk.choices[0].delta.content
+
+            logger.info("Streaming response completed")
+
+        except APITimeoutError as e:
+            logger.error(f"LLM API timeout error: {e}", exc_info=True)
+            msg = "Timeout: Запрос к LLM превысил лимит времени. Попробуйте еще раз."
+            raise Exception(msg) from e
+
+        except AuthenticationError as e:
+            logger.error(f"LLM API authentication error: {e}", exc_info=True)
+            raise Exception("Authentication error: Проверьте API ключ Openrouter.") from e
+
+        except RateLimitError as e:
+            logger.error(f"LLM API rate limit error: {e}", exc_info=True)
+            raise Exception("Rate limit: Превышен лимит запросов. Попробуйте позже.") from e
+
+        except APIError as e:
+            logger.error(f"LLM API error: {e}", exc_info=True)
+            raise Exception(f"API error: {e!s}") from e
+
+        except Exception as e:
+            logger.error(f"Unexpected error in LLM streaming: {e}", exc_info=True)
             raise Exception("Произошла непредвиденная ошибка. Попробуйте еще раз.") from e
