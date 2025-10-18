@@ -14,10 +14,9 @@ COPY frontend/.npmrc ./
 # Установить зависимости (этот слой будет кэшироваться)
 RUN pnpm install --frozen-lockfile
 
-# Скопировать конфигурационные файлы
+# Скопировать конфигурационные файлы (без next-env.d.ts - он генерируется автоматически)
 COPY frontend/next.config.js ./
 COPY frontend/tsconfig.json ./
-COPY frontend/next-env.d.ts ./
 COPY frontend/postcss.config.js ./
 COPY frontend/tailwind.config.ts ./
 COPY frontend/components.json ./
@@ -29,13 +28,10 @@ COPY frontend/styles ./styles
 COPY frontend/components ./components
 COPY frontend/pages ./pages
 
-# Создать директорию public если её нет
+# Создать директорию public (Next.js может требовать её)
 RUN mkdir -p public
 
-# Проверить что lib скопирован (для отладки)
-RUN ls -la lib/ || echo "lib/ not found"
-
-# Собрать production build
+# Собрать production build (Next.js создаст next-env.d.ts автоматически)
 RUN pnpm build
 
 # Открыть порт
