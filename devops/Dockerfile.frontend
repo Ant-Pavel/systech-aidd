@@ -5,30 +5,20 @@ WORKDIR /app
 # Установить pnpm
 RUN npm install -g pnpm@10.18.3
 
-# Скопировать конфигурацию pnpm
-COPY frontend/.npmrc* ./
-
-# Скопировать package.json и lockfile для установки зависимостей
+# Скопировать package.json и lockfile для кэширования зависимостей
 COPY frontend/package.json frontend/pnpm-lock.yaml ./
 
-# Установить зависимости
+# Скопировать .npmrc конфигурацию
+COPY frontend/.npmrc ./
+
+# Установить зависимости (этот слой будет кэшироваться)
 RUN pnpm install --frozen-lockfile
 
-# Скопировать конфигурационные файлы Next.js
-COPY frontend/next.config.js frontend/tsconfig.json ./
-COPY frontend/postcss.config.js frontend/tailwind.config.ts ./
-COPY frontend/components.json ./
+# Скопировать все файлы frontend (лишнее исключено через .dockerignore)
+COPY frontend/ ./
 
-# Скопировать исходный код
-COPY frontend/pages ./pages
-COPY frontend/components ./components
-COPY frontend/lib ./lib
-COPY frontend/styles ./styles
-COPY frontend/types ./types
-COPY frontend/public ./public
-
-# Создать директорию .next для build
-RUN mkdir -p .next
+# Создать директорию public если её нет
+RUN mkdir -p public
 
 # Собрать production build
 RUN pnpm build

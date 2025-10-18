@@ -45,6 +45,9 @@ docker-compose*.yml
 
 # Documentation
 docs/
+frontend/doc/
+frontend/frontend/
+frontend/reference/
 *.md
 README*
 
