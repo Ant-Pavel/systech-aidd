@@ -14,11 +14,26 @@ COPY frontend/.npmrc ./
 # Установить зависимости (этот слой будет кэшироваться)
 RUN pnpm install --frozen-lockfile
 
-# Скопировать все файлы frontend (лишнее исключено через .dockerignore)
-COPY frontend/ ./
+# Скопировать конфигурационные файлы
+COPY frontend/next.config.js ./
+COPY frontend/tsconfig.json ./
+COPY frontend/next-env.d.ts ./
+COPY frontend/postcss.config.js ./
+COPY frontend/tailwind.config.ts ./
+COPY frontend/components.json ./
+
+# Скопировать исходный код
+COPY frontend/lib ./lib
+COPY frontend/types ./types
+COPY frontend/styles ./styles
+COPY frontend/components ./components
+COPY frontend/pages ./pages
 
 # Создать директорию public если её нет
 RUN mkdir -p public
+
+# Проверить что lib скопирован (для отладки)
+RUN ls -la lib/ || echo "lib/ not found"
 
 # Собрать production build
 RUN pnpm build
