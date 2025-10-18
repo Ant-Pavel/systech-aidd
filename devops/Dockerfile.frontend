@@ -5,17 +5,17 @@ WORKDIR /app
 # Установить pnpm
 RUN npm install -g pnpm@10.18.3
 
-# Скопировать все файлы frontend (node_modules исключен через .dockerignore)
+# Скопировать конфигурацию pnpm
+COPY frontend/.npmrc ./
+
+# Скопировать package.json и lockfile для установки зависимостей
+COPY frontend/package.json frontend/pnpm-lock.yaml ./
+
+# Установить зависимости
+RUN pnpm install --frozen-lockfile
+
+# Скопировать остальные файлы frontend
 COPY frontend/ ./
-
-# Убедиться что node_modules не существует
-RUN rm -rf node_modules
-
-# Установить зависимости с правильной конфигурацией
-# --force: пересоздать node_modules без запроса
-# --shamefully-hoist: полный hoisting для совместимости с Next.js
-# --frozen-lockfile: использовать точные версии из lockfile
-RUN pnpm install --frozen-lockfile --shamefully-hoist --force
 
 # Собрать production build
 RUN pnpm build
