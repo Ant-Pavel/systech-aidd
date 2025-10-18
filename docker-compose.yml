@@ -1,7 +1,8 @@
-
 services:
   postgres:
-    image: postgres:16-alpine
+    build:
+      context: .
+      dockerfile: devops/Dockerfile.postgres
     container_name: systech-aidd-postgres
     environment:
       POSTGRES_DB: systech_aidd
@@ -16,8 +17,74 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - systech-network
+
+  bot:
+    build:
+      context: .
+      dockerfile: devops/Dockerfile.bot
+    container_name: systech-aidd-bot
+    environment:
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      DATABASE_URL: postgresql+asyncpg://systech:systech_dev_password@postgres:5432/systech_aidd
+      LLM_MODEL: ${LLM_MODEL:-openai/gpt-oss-20b:free}
+      LLM_TEMPERATURE: ${LLM_TEMPERATURE:-0.7}
+      LLM_MAX_TOKENS: ${LLM_MAX_TOKENS:-1000}
+      LLM_TIMEOUT: ${LLM_TIMEOUT:-30}
+      MAX_HISTORY_MESSAGES: ${MAX_HISTORY_MESSAGES:-10}
+      SYSTEM_PROMPT_PATH: prompts/nutritionist.txt
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - systech-network
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: devops/Dockerfile.api
+    container_name: systech-aidd-api
+    environment:
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      DATABASE_URL: postgresql+asyncpg://systech:systech_dev_password@postgres:5432/systech_aidd
+      LLM_MODEL: ${LLM_MODEL:-openai/gpt-oss-20b:free}
+      LLM_TEMPERATURE: ${LLM_TEMPERATURE:-0.7}
+      LLM_MAX_TOKENS: ${LLM_MAX_TOKENS:-1000}
+      LLM_TIMEOUT: ${LLM_TIMEOUT:-30}
+      MAX_HISTORY_MESSAGES: ${MAX_HISTORY_MESSAGES:-10}
+      SYSTEM_PROMPT_PATH: prompts/nutritionist.txt
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - systech-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: devops/Dockerfile.frontend
+    container_name: systech-aidd-frontend
+    # NEXT_PUBLIC_API_URL не устанавливаем - будет использоваться дефолт http://localhost:8000
+    # Это необходимо потому что браузер пользователя делает запросы, а не контейнер
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    networks:
+      - systech-network
+    restart: unless-stopped
+
+networks:
+  systech-network:
+    driver: bridge
 
 volumes:
   postgres_data:
-
 

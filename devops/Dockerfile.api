@@ -1,0 +1,24 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Установить UV
+RUN pip install --no-cache-dir uv
+
+# Скопировать файлы зависимостей
+COPY pyproject.toml ./
+
+# Установить зависимости
+RUN uv sync --no-dev
+
+# Скопировать исходный код
+COPY src/ ./src/
+COPY api_main.py ./
+COPY prompts/ ./prompts/
+
+# Открыть порт
+EXPOSE 8000
+
+# Запуск API сервера
+CMD ["uv", "run", "python", "api_main.py"]
+

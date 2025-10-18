@@ -1,0 +1,23 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Установить UV
+RUN pip install --no-cache-dir uv
+
+# Скопировать файлы зависимостей
+COPY pyproject.toml ./
+
+# Установить зависимости
+RUN uv sync --no-dev
+
+# Скопировать исходный код
+COPY src/ ./src/
+COPY main.py ./
+COPY alembic/ ./alembic/
+COPY alembic.ini ./
+COPY prompts/ ./prompts/
+
+# Запуск бота с автоматическим применением миграций
+CMD uv run alembic upgrade head && uv run python main.py
+

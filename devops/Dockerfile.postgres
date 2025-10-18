@@ -1,0 +1,9 @@
+FROM postgres:16-alpine
+
+# Метаданные
+LABEL maintainer="Systech Team"
+LABEL description="PostgreSQL database for Systech AIDD"
+
+# Настройки PostgreSQL (можно расширить в будущем)
+ENV POSTGRES_INITDB_ARGS="--encoding=UTF8 --locale=C"
+

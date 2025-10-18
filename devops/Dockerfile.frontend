@@ -1,0 +1,28 @@
+FROM node:20-slim
+
+WORKDIR /app
+
+# Установить pnpm
+RUN npm install -g pnpm@10.18.3
+
+# Скопировать все файлы frontend (node_modules исключен через .dockerignore)
+COPY frontend/ ./
+
+# Убедиться что node_modules не существует
+RUN rm -rf node_modules
+
+# Установить зависимости с правильной конфигурацией
+# --force: пересоздать node_modules без запроса
+# --shamefully-hoist: полный hoisting для совместимости с Next.js
+# --frozen-lockfile: использовать точные версии из lockfile
+RUN pnpm install --frozen-lockfile --shamefully-hoist --force
+
+# Собрать production build
+RUN pnpm build
+
+# Открыть порт
+EXPOSE 3000
+
+# Запуск Next.js в production режиме
+CMD ["pnpm", "start"]
+
