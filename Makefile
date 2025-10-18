@@ -61,7 +61,7 @@ quality-no-test: format lint typecheck
 clean:
 	rm -rf .venv __pycache__ src/__pycache__ tests/__pycache__ .pytest_cache .mypy_cache .ruff_cache htmlcov .coverage
 
-# Docker команды
+# Docker команды (локальная сборка)
 .PHONY: docker-build docker-up docker-down docker-restart docker-logs docker-logs-bot docker-logs-api docker-logs-frontend docker-ps docker-clean
 
 docker-build:
@@ -94,4 +94,25 @@ docker-ps:
 docker-clean:
 	docker-compose down -v
 	docker system prune -f
+
+# Docker команды (production - образы из registry)
+.PHONY: docker-pull docker-up-prod docker-down-prod docker-logs-prod docker-ps-prod docker-restart-prod
+
+docker-pull:
+	docker-compose -f docker-compose.prod.yml pull
+
+docker-up-prod:
+	docker-compose -f docker-compose.prod.yml up -d
+
+docker-down-prod:
+	docker-compose -f docker-compose.prod.yml down
+
+docker-restart-prod:
+	docker-compose -f docker-compose.prod.yml restart
+
+docker-logs-prod:
+	docker-compose -f docker-compose.prod.yml logs -f
+
+docker-ps-prod:
+	docker-compose -f docker-compose.prod.yml ps
 

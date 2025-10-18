@@ -1,5 +1,8 @@
 # Systech AIDD Bot
 
+[![Build and Publish](https://github.com/YOUR_USERNAME/systech-aidd/actions/workflows/build.yml/badge.svg)](https://github.com/YOUR_USERNAME/systech-aidd/actions/workflows/build.yml)
+[![Docker](https://img.shields.io/badge/docker-ghcr.io-blue)](https://github.com/YOUR_USERNAME/systech-aidd/pkgs/container/systech-aidd-bot)
+
 AI-ассистент на базе Telegram с интеграцией LLM через Openrouter.
 
 ## 🚀 Возможности
@@ -11,6 +14,30 @@ AI-ассистент на базе Telegram с интеграцией LLM че�
 - 🔄 Soft delete - данные не удаляются физически
 - ⚙️ Управление через команды
 - 🛡️ Graceful обработка ошибок
+
+## 📦 Docker Images
+
+Проект автоматически публикует Docker образы в GitHub Container Registry при каждом push.
+
+**Доступные образы:**
+- `ghcr.io/YOUR_USERNAME/systech-aidd-bot:latest` - Telegram бот
+- `ghcr.io/YOUR_USERNAME/systech-aidd-api:latest` - API сервис
+- `ghcr.io/YOUR_USERNAME/systech-aidd-frontend:latest` - Web интерфейс
+- `ghcr.io/YOUR_USERNAME/systech-aidd-postgres:latest` - База данных
+
+**Использование:**
+```bash
+# Скачать все образы
+make docker-pull
+
+# Запустить с готовыми образами
+make docker-up-prod
+```
+
+📖 **Документация:**
+- [Настройка GHCR](devops/doc/guides/ghcr-setup.md)
+- [Работа с образами из registry](devops/doc/guides/using-registry-images.md)
+- [GitHub Actions введение](devops/doc/github-actions-intro.md)
 
 ## 📋 Команды бота
 
@@ -29,7 +56,7 @@ AI-ассистент на базе Telegram с интеграцией LLM че�
 
 ## 🐳 Быстрый старт с Docker (Рекомендуется)
 
-### Запуск всего стека одной командой
+### Вариант A: Готовые образы из GitHub Container Registry (быстрее)
 
 1. **Создать .env файл:**
 ```bash
@@ -43,14 +70,32 @@ LLM_TEMPERATURE=0.7
 LLM_MAX_TOKENS=1000
 LLM_TIMEOUT=30
 MAX_HISTORY_MESSAGES=10
+
+# Owner репозитория для GHCR (замените на ваш GitHub username)
+GITHUB_REPOSITORY_OWNER=YOUR_USERNAME
 ```
 
-2. **Запустить все сервисы:**
+2. **Скачать и запустить готовые образы:**
 ```bash
-docker-compose up -d
+make docker-pull
+make docker-up-prod
 ```
 
-Готово! 🎉 Все сервисы запущены:
+Готово! 🎉 Все сервисы запущены за 2-3 минуты!
+
+### Вариант B: Локальная сборка (для разработки)
+
+1. **Создать .env файл** (как выше, но без GITHUB_REPOSITORY_OWNER)
+
+2. **Собрать и запустить:**
+```bash
+make docker-build
+make docker-up
+```
+
+Готово! 🎉 Сборка займет 5-10 минут при первом запуске.
+
+### Результат (оба варианта):
 - 🤖 **Telegram Bot** - обрабатывает сообщения
 - 🔌 **API** - http://localhost:8000 (документация: http://localhost:8000/docs)
 - 🌐 **Frontend** - http://localhost:3000
@@ -58,21 +103,31 @@ docker-compose up -d
 
 ### Управление Docker-стеком
 
+**Локальная сборка:**
 ```bash
-# Запуск
-make docker-up                # Запустить все сервисы
 make docker-build             # Пересобрать образы
+make docker-up                # Запустить все сервисы
 make docker-restart           # Перезапустить сервисы
-
-# Мониторинг
-make docker-ps                # Статус контейнеров
+make docker-down              # Остановить все сервисы
 make docker-logs              # Логи всех сервисов
+make docker-ps                # Статус контейнеров
+```
+
+**Production образы:**
+```bash
+make docker-pull              # Скачать образы из registry
+make docker-up-prod           # Запустить с prod образами
+make docker-restart-prod      # Перезапустить prod сервисы
+make docker-down-prod         # Остановить prod сервисы
+make docker-logs-prod         # Логи prod сервисов
+make docker-ps-prod           # Статус prod контейнеров
+```
+
+**Дополнительно:**
+```bash
 make docker-logs-bot          # Логи только бота
 make docker-logs-api          # Логи только API
 make docker-logs-frontend     # Логи только фронтенда
-
-# Остановка
-make docker-down              # Остановить все сервисы
 make docker-clean             # Остановить + удалить volumes
 ```
 

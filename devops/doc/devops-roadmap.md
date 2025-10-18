@@ -16,7 +16,7 @@ MVP DevOps roadmap для быстрого прохождения пути от 
 | Спринт | Описание | Статус | План |
 |--------|----------|--------|------|
 | **D0** | Basic Docker Setup | ✅ Done | [plan](plans/sprint-D0-plan.md) |
-| **D1** | Build & Publish | 📋 Planned | [plan](plans/sprint-D1-plan.md) |
+| **D1** | Build & Publish | ✅ Done | [summary](../SPRINT_D1_COMPLETE.md) |
 | **D2** | Развертывание на сервер | 📋 Planned | [plan](plans/sprint-D2-plan.md) |
 | **D3** | Auto Deploy | 📋 Planned | [plan](plans/sprint-D3-plan.md) |
 
@@ -59,23 +59,34 @@ MVP DevOps roadmap для быстрого прохождения пути от 
 
 ---
 
-## Спринт D1: Build & Publish
+## Спринт D1: Build & Publish ✅
 
-**Цель:** Автоматическая сборка и публикация Docker образов в GitHub Container Registry при push в main.
+**Цель:** Автоматическая сборка и публикация Docker образов в GitHub Container Registry при push в любую ветку.
+
+**Статус:** ✅ Выполнено
 
 **Состав работ:**
-- Создать GitHub Actions workflow для сборки образов
-- Настроить аутентификацию в GitHub Container Registry (ghcr.io)
-- Собирать 3 образа (bot, api, frontend) параллельно
-- Тегировать образы (`latest` + SHA коммита)
-- Публиковать образы в ghcr.io
-- Добавить badges статуса сборки в README
-- Создать инструкцию по настройке permissions для GHCR
+- ✅ Создать GitHub Actions workflow для сборки образов
+- ✅ Настроить аутентификацию в GitHub Container Registry (ghcr.io)
+- ✅ Собирать 4 образа (bot, api, frontend, postgres) параллельно с matrix strategy
+- ✅ Тегировать образы (`latest`, `sha-<commit>`, `branch-<name>`)
+- ✅ Публиковать образы в ghcr.io с public доступом
+- ✅ Добавить badges статуса сборки в README
+- ✅ Создать инструкции по работе с GHCR и образами
+- ✅ Создать docker-compose.prod.yml для использования образов из registry
+- ✅ Добавить команды в Makefile для работы с prod-образами
 
-**Ожидаемые файлы:**
-- `.github/workflows/build.yml`
-- `devops/doc/guides/github-registry-setup.md`
-- `README.md` (обновленный с badges)
+**Созданные файлы:**
+- `.github/workflows/build.yml` - GitHub Actions workflow
+- `docker-compose.prod.yml` - для использования образов из registry
+- `devops/doc/github-actions-intro.md` - введение в GitHub Actions
+- `devops/doc/guides/ghcr-setup.md` - настройка GHCR
+- `devops/doc/guides/using-registry-images.md` - работа с образами
+- `README.md` (обновлен с badges и секцией Docker Images)
+- `Makefile` (добавлены команды для prod-образов)
+- `devops/SPRINT_D1_COMPLETE.md` - отчет о спринте
+
+**Подробности:** См. [devops/SPRINT_D1_COMPLETE.md](../SPRINT_D1_COMPLETE.md)
 
 ---
 
