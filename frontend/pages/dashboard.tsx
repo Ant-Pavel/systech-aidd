@@ -47,7 +47,7 @@ export default function Dashboard() {
     return (
         <>
             <Head>
-                <title>Dashboard - Systech AIDD</title>
+                <title>Systech AIDD. Dashboard</title>
                 <meta
                     name="description"
                     content="Statistics dashboard for AI-Driven Dialogue System"
